@@ -46,7 +46,6 @@ void writeOutput(char *algoritmo, int size, int *A, int *B, int *C)
     sprintf(fileName, "output/%s_%ld.txt", algoritmo, time);
 
     FILE *fp;
-    printf("%s\n", fileName);
     fp = fopen(fileName, "w+");
 
     printMatrix(fp, size, A);
