@@ -3,17 +3,11 @@
 #include <string.h>
 #include <sys/time.h>
 
-unsigned long int curtime()
+struct timeval tv;
+static double curtime()
 {
-    struct timeval te;
-    gettimeofday(&te, NULL);
-    unsigned long time = te.tv_sec * 1000LL + te.tv_usec / 1000;
-    return time;
-}
-
-int *getAddress(int *index, int size, int m, int n)
-{
-    return index + ((size * m) + n);
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + tv.tv_usec / 1000000.0;
 }
 
 void printMatrix(FILE *fp, int size, int *M)
@@ -22,7 +16,7 @@ void printMatrix(FILE *fp, int size, int *M)
     for (m = 0; m < size; m++)
     {
         for (n = 0; n < size; n++)
-            fprintf(fp, "%d ", *getAddress(M, size, m, n));
+            fprintf(fp, "%d ", *(M + size * m + n));
         fprintf(fp, "\n");
     }
 }
@@ -40,7 +34,7 @@ int *createMatrix(int size, int subseed)
 
 void writeOutput(char *algoritmo, int size, int *A, int *B, int *C)
 {
-    unsigned long time = curtime();
+    unsigned long time = curtime() * 1000;
 
     char fileName[100];
     sprintf(fileName, "output/%s_%ld.txt", algoritmo, time);
