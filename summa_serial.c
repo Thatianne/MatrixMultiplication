@@ -36,10 +36,10 @@ int main(int argc, char *argv[])
 
 	//---------------------------------------------------------------------------------
 	int i, j, k;
-	for (k = 0; k < size; k++)
-		for (i = 0; i < size; i++)
-			for (j = 0; j < size; j++)
-				*(C + size * i + j) += *(A + size * i + k) * *(B + size * k + j);
+	for (k = 0; k < dimension; k++)
+		for (i = 0; i < dimension; i++)
+			for (j = 0; j < dimension; j++)
+				*(C + dimension * i + j) += *(A + dimension * i + k) * *(B + dimension * k + j);
 	//---------------------------------------------------------------------------------
 
 	cpu_end = ((double)(clock())) / CLOCKS_PER_SEC;
