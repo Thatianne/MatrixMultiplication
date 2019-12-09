@@ -39,10 +39,7 @@ int main(int argc, char *argv[])
 	for (i = 0; i < size; i++)
 		for (j = 0; j < size; j++)
 			for (k = 0; k < size; k++)
-			{
-				printf("C(%d,%d) = A(%d,%d) * B(%d,%d)\n", i, j, i, k, k, j);
 				*(C + size * i + j) += *(A + size * i + k) * *(B + size * k + j);
-			}
 	//---------------------------------------------------------------------------------
 
 	cpu_end = ((double)(clock())) / CLOCKS_PER_SEC;
