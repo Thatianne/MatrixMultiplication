@@ -1,12 +1,12 @@
 ### Makefile ###
 
-all:serial_classic strassen_mpi strassen_mpi_omp summa_serial summa_mpi summa_mpi_omp
+all:serial_classic strassen_serial strassen_mpi strassen_mpi_omp summa_serial summa_mpi summa_mpi_omp
 
 serial_classic:
 	gcc -O3 serial_classic.c -o bin/serial_classic
 
-#strassen_serial:
-#	gcc -O3 strassen_serial.c -o bin/strassen_serial
+strassen_serial:
+	gcc -O3 strassen_serial.c -o bin/strassen_serial
 
 strassen_mpi:
 	mpicc -O3 strassen_mpi.c -o bin/strassen_mpi
