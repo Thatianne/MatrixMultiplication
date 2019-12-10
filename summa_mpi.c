@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 
 	//---------------------------------------------------------------------------------
 	// Configurações do MPI
-	MPI_Init(&argc,&argv);
+	MPI_Init(&argc, &argv);
 
 	int mpi_world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &mpi_world_size);
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 	for (k = 0; k < dimension; k++)
 		for (i = 0; i < dimension; i++)
 			for (j = 0; j < dimension; j++)
-				*(C + dimension * i + j) += *(A + dimension * i + k) * *(B + dimension * k + j);
+				C[dimension * i + j] += A[dimension * i + k] * B[dimension * k + j];
 
 	MPI_Finalize();
 	//---------------------------------------------------------------------------------
