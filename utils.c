@@ -16,7 +16,7 @@ void printMatrix(FILE *fp, int dimension, int *M)
     for (i = 0; i < dimension; i++)
     {
         for (j = 0; j < dimension; j++)
-            fprintf(fp, "%d ", *(M + dimension * i + j));
+            fprintf(fp, "%d ", M[dimension * i + j]);
         fprintf(fp, "\n");
     }
 }

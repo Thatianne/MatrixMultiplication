@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 	for (k = 0; k < dimension; k++)
 		for (i = 0; i < dimension; i++)
 			for (j = 0; j < dimension; j++)
-				*(C + dimension * i + j) += *(A + dimension * i + k) * *(B + dimension * k + j);
+				C[dimension * i + j] += A[dimension * i + k] * B[dimension * k + j];
 	//---------------------------------------------------------------------------------
 
 	cpu_end = ((double)(clock())) / CLOCKS_PER_SEC;
