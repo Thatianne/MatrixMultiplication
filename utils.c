@@ -10,13 +10,13 @@ static double curtime()
     return tv.tv_sec + tv.tv_usec / 1000000.0;
 }
 
-void printMatrix(FILE *fp, int dimension, int *M)
+void printMatrix(FILE *fp, int n, int *M)
 {
     int i, j;
-    for (i = 0; i < dimension; i++)
+    for (i = 0; i < n; i++)
     {
-        for (j = 0; j < dimension; j++)
-            fprintf(fp, "%d ", M[dimension * i + j]);
+        for (j = 0; j < n; j++)
+            fprintf(fp, "%d ", M[n * i + j]);
         fprintf(fp, "\n");
     }
 }
@@ -25,18 +25,18 @@ void printMatrix(FILE *fp, int dimension, int *M)
  * Gera uma matriz de números aleatórios entre -1000 a 1000
  * de dimensões d x d.
  */
-int *createMatrix(int dimension, int subseed)
+int *createMatrix(int n, int subseed)
 {
-    int *M = malloc(dimension * dimension * sizeof(int));
+    int *M = (int *)malloc(n * n * sizeof(int));
     int i, j, *x = M;
     srand(587938712 + subseed);
-    for (i = 0; i < dimension; i++)
-        for (j = 0; j < dimension; j++)
+    for (i = 0; i < n; i++)
+        for (j = 0; j < n; j++)
             *(x++) = (rand() % 2000) - 1000;
     return M;
 }
 
-void writeOutput(char *algoritmo, int dimension, int *A, int *B, int *C)
+void writeOutput(char *algoritmo, int n, int *A, int *B, int *C)
 {
     unsigned long time = curtime() * 1000;
 
@@ -46,19 +46,19 @@ void writeOutput(char *algoritmo, int dimension, int *A, int *B, int *C)
     FILE *fp;
     fp = fopen(fileName, "w+");
 
-    printMatrix(fp, dimension, A);
+    printMatrix(fp, n, A);
     fprintf(fp, "\n");
-    printMatrix(fp, dimension, B);
+    printMatrix(fp, n, B);
     fprintf(fp, "\n");
-    printMatrix(fp, dimension, C);
+    printMatrix(fp, n, C);
 
     fclose(fp);
 }
 
-void writeLog(char *fileName, char *algoritmo, int dimension, double allTime, double execTime)
+void writeLog(char *fileName, char *algoritmo, int n, double allTime, double execTime)
 {
     FILE *log;
     log = fopen(fileName, "a");
-    fprintf(log, "%s,%d,%f,%f\n", algoritmo, dimension, allTime, execTime);
+    fprintf(log, "%s,%d,%f,%f\n", algoritmo, n, allTime, execTime);
     fclose(log);
 }

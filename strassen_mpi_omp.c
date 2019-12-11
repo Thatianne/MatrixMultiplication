@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 	// CRIAÇÃO DE MATRIZES
 	int *A = createMatrix(size, 0);
 	int *B = createMatrix(size, 1);
-	int *C = malloc(size * size * sizeof(int));
+	int *C = (int *)malloc(size * size * sizeof(int));
 
 	// TEMPOS
 	clock_t cpu_t1 = clock();
