@@ -61,6 +61,13 @@ int main(int argc, char *argv[])
 
 int *multiply(int *A, int *B, int n)
 {
+  if (n == 1)
+  {
+    int *C = (int *)malloc(sizeof(int));
+    C[0] = A[0] * B[0];
+    return C;
+  }
+
   int qSize = (n * n) / 4;
 
   int *A11 = (A + 0), *A12 = (A + qSize), *A21 = (A + qSize * 2), *A22 = (A + qSize * 3);
@@ -99,34 +106,13 @@ int *multiply(int *A, int *B, int n)
     S10[x] = B21[x] + B22[x]; // S10 = B21 + B22
   }
 
-  if (qSize == 1)
-  {
-    P1 = (int *)malloc(sizeof(int) * qSize);
-    P2 = (int *)malloc(sizeof(int) * qSize);
-    P3 = (int *)malloc(sizeof(int) * qSize);
-    P4 = (int *)malloc(sizeof(int) * qSize);
-    P5 = (int *)malloc(sizeof(int) * qSize);
-    P6 = (int *)malloc(sizeof(int) * qSize);
-    P7 = (int *)malloc(sizeof(int) * qSize);
-
-    P1[0] = S1[0] * S2[0];  // P1 = S1 * S2
-    P2[0] = S3[0] * B11[0]; // P2 = S3 * B11
-    P3[0] = A11[0] * S4[0]; // P3 = A11 * S4
-    P4[0] = A22[0] * S5[0]; // P4 = A22 * S5
-    P5[0] = S6[0] * B22[0]; // P5 = S6 * B22
-    P6[0] = S7[0] * S8[0];  // P6 = S7 * S8
-    P7[0] = S9[0] * S10[0]; // P7 = S9 * S10
-  }
-  else
-  {
-    P1 = multiply(S1, S2, n / 2);  // P1 = S1 * S2
-    P2 = multiply(S3, B11, n / 2); // P2 = S3 * B11
-    P3 = multiply(A11, S4, n / 2); // P3 = A11 * S4
-    P4 = multiply(A22, S5, n / 2); // P4 = A22 * S5
-    P5 = multiply(S6, B22, n / 2); // P5 = S6 * B22
-    P6 = multiply(S7, S8, n / 2);  // P6 = S7 * S8
-    P7 = multiply(S9, S10, n / 2); // P7 = S9 * S10
-  }
+  P1 = multiply(S1, S2, n / 2);  // P1 = S1 * S2
+  P2 = multiply(S3, B11, n / 2); // P2 = S3 * B11
+  P3 = multiply(A11, S4, n / 2); // P3 = A11 * S4
+  P4 = multiply(A22, S5, n / 2); // P4 = A22 * S5
+  P5 = multiply(S6, B22, n / 2); // P5 = S6 * B22
+  P6 = multiply(S7, S8, n / 2);  // P6 = S7 * S8
+  P7 = multiply(S9, S10, n / 2); // P7 = S9 * S10
 
   for (x = 0; x < qSize; x++)
   {
@@ -136,27 +122,35 @@ int *multiply(int *A, int *B, int n)
     C22[x] = P1[x] - P2[x] + P3[x] + P6[x]; // C22 = P1 - P2 + P3 + P6
   }
 
-  return join(C11, C12, C21, C22, n);
+  return join(C11, C12, C21, C22, qSize);
 }
 
 // Admite que todas as matrizes tem dimensão (n/2 x n/2)
 int *join(int *C11, int *C12, int *C21, int *C22, int n)
 {
-  int size = n * n;
-  int *C = (int *)malloc(size * sizeof(int));
+  int *C = (int *)malloc(n * n * sizeof(int));
 
-  int qSize = size / 4;
-  int x = 0;          // Indice para as matrizes C11, C12, C21 e C22
-  int x1 = 0;         // Indice para a matriz C representando o início de C11
-  int x2 = qSize;     // Indice para a matriz C representando o início de C12
-  int x3 = qSize * 2; // Indice para a matriz C representando o início de C21
-  int x4 = qSize * 3; // Indice para a matriz C representando o início de C22
-  for (x = 0; x < qSize; x++)
+  int _n = n / 2;
+  int i1 = 0,
+      i2 = _n,
+      i3 = 0,
+      i4 = _n;
+  int j1, j2, j3, j4;
+
+  int i, j;
+  for (i = 0; i < _n; i++)
   {
-    C[x1++] = C11[x]; // Primeiro Quadrante
-    C[x2++] = C12[x]; // Segundo Quadrante
-    C[x3++] = C21[x]; // Terceiro Quadrante
-    C[x4++] = C22[x]; // Quarto Quadrante
+    j1 = 0;
+    j2 = 0;
+    j3 = _n;
+    j4 = _n;
+    for (j = 0; j < _n; j++)
+    {
+      C[i1 * _n + j1] = C11[i * _n + j]; // Primeiro Quadrante
+      C[i2 * _n + j2] = C12[i * _n + j]; // Segundo Quadrante
+      C[i3 * _n + j3] = C21[i * _n + j]; // Terceiro Quadrante
+      C[i4 * _n + j4] = C22[i * _n + j]; // Quarto Quadrante
+    }
   }
   return C;
 }

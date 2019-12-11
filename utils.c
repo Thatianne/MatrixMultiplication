@@ -3,6 +3,8 @@
 #include <string.h>
 #include <sys/time.h>
 
+#define RANGE 5
+
 struct timeval tv;
 static double curtime()
 {
@@ -21,6 +23,17 @@ void printMatrix(FILE *fp, int n, int *M)
     }
 }
 
+void printfMatrix(int n, int *M)
+{
+    int i, j;
+    for (i = 0; i < n; i++)
+    {
+        for (j = 0; j < n; j++)
+            printf("%d ", M[n * i + j]);
+        printf("\n");
+    }
+}
+
 /**
  * Gera uma matriz de números aleatórios entre -1000 a 1000
  * de dimensões d x d.
@@ -32,7 +45,7 @@ int *createMatrix(int n, int subseed)
     srand(587938712 + subseed);
     for (i = 0; i < n; i++)
         for (j = 0; j < n; j++)
-            *(x++) = (rand() % 2000) - 1000;
+            *(x++) = (rand() % (RANGE * 2)) - RANGE;
     return M;
 }
 
