@@ -19,7 +19,8 @@ int main(int argc, char *argv[])
 	}
 
 	int n = atoi(argv[1]);
-	char *logFile = argv[2];
+	char* matrixPrefix = argv[2];
+	char *logFile = argv[3];
 
 	// CRIAÇÃO DE MATRIZES
 	int *A = createMatrix(n, 0);
