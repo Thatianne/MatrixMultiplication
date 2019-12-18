@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+typedef unsigned long int ulint;
+
 double randomDouble(double min, double max)
 {
 	double range = (max - min);
@@ -9,28 +11,42 @@ double randomDouble(double min, double max)
 	return min + (rand() / div);
 }
 
+void generateMatrix(char *label, ulint n)
+{
+	char binFile[100];
+	sprintf(binFile, "matrix/%s_%dx%d.bin", label, (int)n, (int)n);
+	FILE *fpBin = fopen(binFile, "w+");
+
+	char txtFile[100];
+	sprintf(txtFile, "matrix/%s_%dx%d.txt", label, (int)n, (int)n);
+	FILE *fpTxt = fopen(txtFile, "w+");
+
+	double value;
+
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < n; j++)
+		{
+			value = randomDouble(-999999999.0, 999999999.0);
+			fwrite(&value, 1, sizeof(value), fpBin);
+			fprintf(fpTxt, "%09.16lf ", value);
+		}
+		fprintf(fpTxt, "\n");
+	}
+
+	fclose(fpBin);
+	fclose(fpTxt);
+}
+
 int main(int argc, char *argv[])
 {
-	unsigned long int n = (argc > 1) ? atoi(argv[1]) : 10;
+	ulint n = (argc > 1) ? atoi(argv[1]) : 10;
 	int seed = (argc > 2) ? atoi(argv[2]) : 0;
 
 	srand(seed);
 
-	char fileName[100];
-	sprintf(fileName, "matrix/%dx%d_%d.txt", (int)n, (int)n, seed);
-	FILE *fp;
-	fp = fopen(fileName, "w+");
-
-	unsigned long int x;
-	double value;
-
-	for (x = 0; x < (n * n); x++)
-	{
-		value = randomDouble(-999.0, 999.0);
-		fwrite(&value, 1, sizeof(value), fp);
-	}
-
-	fclose(fp);
+	generateMatrix("A", n);
+	generateMatrix("B", n);
 
 	return 0;
 }
