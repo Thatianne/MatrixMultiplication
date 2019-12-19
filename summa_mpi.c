@@ -75,8 +75,14 @@ int main(int argc, char *argv[])
 
 			// Realiza a Multiplicação da coluna A pela Linha B
 			for (int i = 0; i < n; i++)
+			{
 				for (int j = 0; j < n; j++)
+				{
 					C[i * n + j] += A[i] * B[j];
+					printf("A(%d,%d)*B(%d,%d) (%.f*%.f) ", i, col_a, row, j, A[i], B[j]);
+				}
+				printf("\n");
+			}
 		}
 	}
 
@@ -87,7 +93,7 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < n; j++)
-			fprintf(fp, "%d ", C[i * n + j]);
+			fprintf(fp, "%lf ", C[i * n + j]);
 		fprintf(fp, "\n");
 	}
 	fclose(fp);
