@@ -10,11 +10,15 @@ double randomDouble(double min, double max)
 	double div = RAND_MAX / range;
 	return min + (rand() / div);
 }
+double randomInt(int max)
+{
+	return rand() % max;
+}
 
 void generateMatrix(char *label, ulint n)
 {
 	char binFile[100];
-	sprintf(binFile, "matrix/%s_%dx%d.bin", label, (int)n, (int)n);
+	sprintf(binFile, "matrix/%s_%dx%d", label, (int)n, (int)n);
 	FILE *fpBin = fopen(binFile, "w+");
 
 	char txtFile[100];
@@ -27,7 +31,8 @@ void generateMatrix(char *label, ulint n)
 	{
 		for (int j = 0; j < n; j++)
 		{
-			value = randomDouble(-999999999.0, 999999999.0);
+			//value = randomDouble(-999999999.0, 999999999.0);
+			value = randomInt(10);
 			fwrite(&value, 1, sizeof(value), fpBin);
 			fprintf(fpTxt, "%09.16lf ", value);
 		}
