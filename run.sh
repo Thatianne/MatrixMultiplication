@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# mpirun -np 1 --hostfile hostfile bin/summa_mpi 4 matrix/A matrix/B
 for a in serial_classic summa_serial summa_mpi #summa_mpi_omp strassen_mpi strassen_mpi_omp
 do
     echo "executando $a..."

@@ -81,6 +81,16 @@ int main(int argc, char *argv[])
 	}
 
 	MPI_Finalize();
+
+	FILE *fp;
+	fp = fopen("matrix/C.txt", "w+");
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < n; j++)
+			fprintf(fp, "%d ", C[i * n + j]);
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
 	//---------------------------------------------------------------------------------
 
 	return 0;
