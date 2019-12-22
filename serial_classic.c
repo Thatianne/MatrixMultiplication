@@ -20,20 +20,19 @@ int main(int argc, char *argv[])
 	}
 
 	int n = atoi(argv[1]);
-	FILE *fpA;
-	char *path_matriz_A = argv[2];
-	fpA = fopen(path_matriz_A, "rb");
 
-	FILE *fpB;
+	char *path_matriz_A = argv[2];
+	FILE *fpA = fopen(path_matriz_A, "rb");
+
 	char *path_matriz_B = argv[3];
-	fpB = fopen(path_matriz_B, "rb");
+	FILE *fpB = fopen(path_matriz_B, "rb");
 
 	size_t readed;
 
 	ulint rowSize = (ulint)n * (ulint)sizeof(double);
 	double *A = (double *)malloc(rowSize);
 	double *B = (double *)malloc(rowSize);
-	double *C = (double *)malloc((ulint)n * rowSize);
+	double *C = (double *)calloc((ulint)n * (ulint)n, sizeof(double));
 
 	//---------------------------------------------------------------------------------
 	for (int i = 0; i < n; i++)
@@ -68,6 +67,11 @@ int main(int argc, char *argv[])
 	}
 	//---------------------------------------------------------------------------------
 
+	fclose(fpA);
+	free(A);
+	fclose(fpB);
+	free(B);
+
 	// SAÍDAS
 	FILE *fp;
 	fp = fopen("matrix/C.txt", "w+");
@@ -79,8 +83,6 @@ int main(int argc, char *argv[])
 	}
 	fclose(fp);
 
-	free(A);
-	free(B);
 	free(C);
 
 	return 0;

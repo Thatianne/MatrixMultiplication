@@ -1,75 +1,128 @@
 #pragma GCC optimize("O3")
 #pragma GCC option("arch=native", "tune=native", "no-zero-upper")
-#pragma GCC target("avx")
+#pragma GCC target("avx2")
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "mpi.h"
 #include <time.h>
 #include <sys/time.h>
-#include "utils.c"
+#include "mpi.h"
+#include <omp.h>
 
 #define ALGORITMO "summa_mpi_omp"
 
+typedef unsigned long int ulint;
+
 int main(int argc, char *argv[])
 {
-	if (argc != 3)
+	if (argc != 5)
 	{
-		printf("Parametros invalidos, verifique...\n");
+		printf("Parametros invalidos (%d), verifique...\n", argc);
 		return -1;
 	}
 
 	int n = atoi(argv[1]);
-	char *logFile = argv[2];
+	int nThreads = atoi(argv[2]);
 
-	// CRIAÇÃO DE MATRIZES
-	int *A = createMatrix(n, 0);
-	int *B = createMatrix(n, 1);
-	int size = n * n;
-	int *C = (int *)malloc(size * sizeof(int));
+	char *path_matriz_A = argv[3];
+	FILE *fpA;
 
-	double exec_start, exec_end, exec_time = 0.0;
-	double cpu_start, cpu_end, cpu_time = 0.0;
+	char *path_matriz_B = argv[4];
+	FILE *fpB;
 
-	exec_start = curtime();
-	cpu_start = ((double)(clock())) / CLOCKS_PER_SEC;
+	size_t readed;
+
+	ulint rowSize = (ulint)n * (ulint)sizeof(double);
+	double *A;
+	double *B;
+	double *C = (double *)malloc((ulint)n * rowSize);
+
+	//---------------------------------------------------------------------------------
+	// Configurações do OpenMP
+	omp_set_num_threads(nThreads);
+	omp_set_dynamic(0);
 
 	//---------------------------------------------------------------------------------
 	// Configurações do MPI
 	MPI_Init(&argc, &argv);
 
-	int mpi_world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &mpi_world_size);
+	int world_size;
+	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-	int mpi_world_rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &mpi_world_rank);
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-	char mpi_processor_name[MPI_MAX_PROCESSOR_NAME];
-	int mpi_name_len;
-	MPI_Get_processor_name(mpi_processor_name, &mpi_name_len);
+	char processor_name[MPI_MAX_PROCESSOR_NAME];
+	int name_len;
+	MPI_Get_processor_name(processor_name, &name_len);
 
-	int i, j, k;
-	for (k = 0; k < n; k++)
+	//---------------------------------------------------------------------------------
+	int k;
+#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rank, world_size) private(k, fpA, A, fpB, B, readed) schedule(dynamic)
+	for (k = rank; k < n; k += (world_size))
+	{
+		int i;
+#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, k) private(i, fpA, A, fpB, B, readed) schedule(dynamic)
 		for (i = 0; i < n; i++)
-			for (j = 0; j < n; j++)
-				C[n * i + j] += A[n * i + k] * B[n * k + j];
+		{
+			//================================ LEITURA ================================
+			// Lê o elemento A(i,k) da matriz do arquivo 'fpA' e armazena em A
+			fpA = fopen(path_matriz_A, "rb");
+			A = (double *)malloc(rowSize);
+			fseek(fpA, 0, SEEK_SET);
+			fseek(fpA, ((ulint)i * (ulint)n + (ulint)k) * (ulint)sizeof(double), SEEK_SET);
+			readed = fread(&A[0], sizeof(double), 1, fpA);
+			//=========================================================================
 
-	MPI_Finalize();
+			//================================ LEITURA ================================
+			// Lê a linha 'k' da matriz do arquivo 'fpB' e armazena em B
+			fpB = fopen(path_matriz_B, "rb");
+			B = (double *)malloc(rowSize);
+			fseek(fpB, 0, SEEK_SET);
+			fseek(fpB, ((ulint)k * (ulint)n) * (ulint)sizeof(double), SEEK_SET);
+			readed = fread(B, sizeof(double), n, fpB);
+			//=========================================================================
+
+			int j;
+#pragma omp parallel for shared(C, n, A, B, i) private(j) schedule(dynamic)
+			for (j = 0; j < n; j++)
+			{
+				// Realiza a Multiplicação de A pela linha B
+				C[i * n + j] += A[0] * B[j];
+				// printf("C(%d,%d) = A(%d,%d)*B(%d,%d) (%.f*%.f)\n", i, j, i, k, k, j, A[0], B[j]);
+			}
+			// printf("\n");
+			
+			fclose(fpA);
+			free(A);
+			fclose(fpB);
+			free(B);
+		}
+	}
+
+	//---------------------------------------------------------------------------------
+	// Join das matrizes calculadas
+	double *result = (double *)malloc((ulint)n * rowSize);
+	MPI_Reduce(C, result, n * n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	//---------------------------------------------------------------------------------
 
-	cpu_end = ((double)(clock())) / CLOCKS_PER_SEC;
-	exec_end = curtime();
-
-	cpu_time = (cpu_end - cpu_start);
-	exec_time = (exec_end - exec_start);
-
 	// SAÍDAS
-	writeLog(logFile, ALGORITMO, n, cpu_time, exec_time);
-	writeOutput(ALGORITMO, n, A, B, C);
+	if (rank == 0)
+	{
+		FILE *fp;
+		fp = fopen("matrix/C.txt", "w+");
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < n; j++)
+				fprintf(fp, "%lf ", result[i * n + j]);
+			fprintf(fp, "\n");
+		}
+		fclose(fp);
+	}
 
-	free(A);
-	free(B);
 	free(C);
+
+	MPI_Finalize();
 
 	return 0;
 }

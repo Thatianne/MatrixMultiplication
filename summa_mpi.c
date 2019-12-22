@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 	ulint rowSize = (ulint)n * (ulint)sizeof(double);
 	double *A = (double *)malloc(rowSize);
 	double *B = (double *)malloc(rowSize);
-	double *C = (double *)malloc((ulint)n * rowSize);
+	double *C = (double *)calloc((ulint)n * (ulint)n, sizeof(double));
 
 	//---------------------------------------------------------------------------------
 	// Configurações do MPI
