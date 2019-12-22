@@ -18,7 +18,7 @@ double randomInt(int max)
 void generateMatrix(char *label, ulint n)
 {
 	char binFile[100];
-	sprintf(binFile, "matrix/%s_%dx%d", label, (int)n, (int)n);
+	sprintf(binFile, "matrix/%s", label, (int)n, (int)n);
 	FILE *fpBin = fopen(binFile, "w+");
 
 	char txtFile[100];
