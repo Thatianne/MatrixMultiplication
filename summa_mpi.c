@@ -32,9 +32,10 @@ int main(int argc, char *argv[])
 	size_t readed;
 
 	ulint rowSize = (ulint)n * (ulint)sizeof(double);
+	ulint matrixSize = (ulint)n * (ulint)n;
 	double *A = (double *)malloc(rowSize);
 	double *B = (double *)malloc(rowSize);
-	double *C = (double *)calloc((ulint)n * (ulint)n, sizeof(double));
+	double *C = (double *)calloc(matrixSize, sizeof(double));
 
 	//---------------------------------------------------------------------------------
 	// Configurações do MPI
@@ -82,8 +83,8 @@ int main(int argc, char *argv[])
 	}
 	//---------------------------------------------------------------------------------
 	// Join das matrizes calculadas
-	double *result = (double *)malloc((ulint)n * rowSize);
-	MPI_Reduce(C, result, n * n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	double *result = (double *)calloc(matrixSize, sizeof(double));
+	MPI_Reduce(C, result, matrixSize, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	//---------------------------------------------------------------------------------
 
 	// SAÍDAS

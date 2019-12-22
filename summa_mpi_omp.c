@@ -33,9 +33,10 @@ int main(int argc, char *argv[])
 	size_t readed;
 
 	ulint rowSize = (ulint)n * (ulint)sizeof(double);
+	ulint matrixSize = (ulint)n * (ulint)n;
 	double *A;
 	double *B;
-	double *C = (double *)malloc((ulint)n * rowSize);
+	double *C = (double *)calloc(matrixSize, sizeof(double));
 
 	//---------------------------------------------------------------------------------
 	// Configurações do OpenMP
@@ -102,7 +103,7 @@ int main(int argc, char *argv[])
 
 	//---------------------------------------------------------------------------------
 	// Join das matrizes calculadas
-	double *result = (double *)malloc((ulint)n * rowSize);
+	double *result = (double *)calloc(matrixSize, sizeof(double));
 	MPI_Reduce(C, result, n * n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	//---------------------------------------------------------------------------------
 
