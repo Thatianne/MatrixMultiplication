@@ -6,50 +6,76 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
-#include "utils.c"
 
 #define ALGORITMO "summa_serial"
 
+typedef unsigned long int ulint;
+
 int main(int argc, char *argv[])
 {
-	if (argc != 3)
+	if (argc != 4)
 	{
 		printf("Parametros invalidos, verifique...\n");
 		return -1;
 	}
 
 	int n = atoi(argv[1]);
-	char *logFile = argv[2];
+	FILE *fpA;
+	char *path_matriz_A = argv[2];
+	fpA = fopen(path_matriz_A, "rb");
 
-	// CRIAÇÃO DE MATRIZES
-	int *A = createMatrix(n, 0);
-	int *B = createMatrix(n, 1);
-	int size = n * n;
-	int *C = (int *)malloc(size * sizeof(int));
+	FILE *fpB;
+	char *path_matriz_B = argv[3];
+	fpB = fopen(path_matriz_B, "rb");
 
-	double exec_start, exec_end, exec_time = 0.0;
-	double cpu_start, cpu_end, cpu_time = 0.0;
+	size_t readed;
 
-	exec_start = curtime();
-	cpu_start = ((double)(clock())) / CLOCKS_PER_SEC;
+	//tamanho das matrizes A e B	LINHA/COLUNAS		TAMANHO
+	ulint rowSize = (ulint)n * (ulint)sizeof(double);
+	double *A = (double *)malloc(sizeof(double));
+	double *B = (double *)malloc(rowSize);
+	double *C = (double *)malloc((ulint)n * rowSize);
 
 	//---------------------------------------------------------------------------------
-	int i, j, k;
-	for (k = 0; k < n; k++)
-		for (i = 0; i < n; i++)
-			for (j = 0; j < n; j++)
-				C[n * i + j] += A[n * i + k] * B[n * k + j];
+	for (int k = 0; k < n; k++)
+	{
+		for (int i = 0; i < n; i++)
+		{
+			//================================ LEITURA ================================
+			// Lê o elemento A(i,k) da matriz do arquivo 'fpA' e armazena em A
+			fseek(fpA, 0, SEEK_SET);
+			fseek(fpA, ((ulint)i * (ulint)n + (ulint)k) * (ulint)sizeof(double), SEEK_SET);
+			readed = fread(&A[0], sizeof(double), 1, fpA);
+			//=========================================================================
+
+			//================================ LEITURA ================================
+			// Lê a linha 'k' da matriz do arquivo 'fpB' e armazena em B
+			fseek(fpB, 0, SEEK_SET);
+			fseek(fpB, ((ulint)k * (ulint)n) * (ulint)sizeof(double), SEEK_SET);
+			readed = fread(B, sizeof(double), n, fpB);
+			//=========================================================================
+
+			for (int j = 0; j < n; j++)
+			{
+				// Realiza a Multiplicação de A pela linha B
+				C[i * n + j] += A[0] * B[j];
+				//printf("C(%d,%d) = A(%d,%d)*B(%d,%d) (%.f*%.f)\n", i, j, i, k, k, j, A[0], B[j]);
+			}
+			//printf("\n");
+		}
+	}
 	//---------------------------------------------------------------------------------
-
-	cpu_end = ((double)(clock())) / CLOCKS_PER_SEC;
-	exec_end = curtime();
-
-	cpu_time = (cpu_end - cpu_start);
-	exec_time = (exec_end - exec_start);
 
 	// SAÍDAS
-	writeLog(logFile, ALGORITMO, n, cpu_time, exec_time);
-	writeOutput(ALGORITMO, n, A, B, C);
+	FILE *fp;
+	fp = fopen("matrix/C.txt", "w+");
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < n; j++)
+			fprintf(fp, "%lf ", C[i * n + j]);
+		fprintf(fp, "\n");
+	}
+	fclose(fp);
 
 	free(A);
 	free(B);

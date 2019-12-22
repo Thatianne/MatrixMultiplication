@@ -4,15 +4,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "mpi.h"
 #include <time.h>
 #include <sys/time.h>
-#include "utils.c"
+#include "mpi.h"
 
 #define ALGORITMO "summa_mpi"
-#define MASTER 0
-#define ENVIO_OFFSET 1000
-#define ENVIO_VALOR_INICIAL 2000
 
 typedef unsigned long int ulint;
 
@@ -33,12 +29,13 @@ int main(int argc, char *argv[])
 	char *path_matriz_B = argv[3];
 	fpB = fopen(path_matriz_B, "rb");
 
+	size_t readed;
+
 	//tamanho das matrizes A e B	LINHA/COLUNAS		TAMANHO
 	ulint rowSize = (ulint)n * (ulint)sizeof(double);
-	ulint matrixSize = (ulint)n * rowSize;
 	double *A = (double *)malloc(rowSize);
 	double *B = (double *)malloc(rowSize);
-	double *C = (double *)malloc(matrixSize);
+	double *C = (double *)malloc((ulint)n * rowSize);
 
 	//---------------------------------------------------------------------------------
 	// Configurações do MPI
@@ -57,37 +54,36 @@ int main(int argc, char *argv[])
 	MPI_Status status;
 
 	//---------------------------------------------------------------------------------
-
-	// admite que rank começa em 0 e que o processo MASTER trabalha igualmente
-	for (int col_a = rank; col_a < n; col_a += (world_size))
+	for (int k = rank; k < n; k += (world_size))
 	{
-		// Lê a coluna 'col_a' do arquivo 'fpA' e armazena em A
-		fseek(fpA, (ulint)col_a * (ulint)n * (ulint)sizeof(double), SEEK_SET);
-		fread(A, sizeof(double), n, fpA);
-		fseek(fpA, 0, SEEK_SET);
-
-		for (ulint row = 0; row < n; row++)
+		for (int i = 0; i < n; i++)
 		{
-			// Lê a linha 'row' do arquivo 'fpB' e armazena em B
-			fseek(fpB, (ulint)row * (ulint)n * (ulint)sizeof(double), SEEK_SET);
-			fread(B, sizeof(double), n, fpB);
-			fseek(fpB, 0, SEEK_SET);
+			//================================ LEITURA ================================
+			// Lê o elemento A(i,k) da matriz do arquivo 'fpA' e armazena em A
+			fseek(fpA, 0, SEEK_SET);
+			fseek(fpA, ((ulint)i * (ulint)n + (ulint)k) * (ulint)sizeof(double), SEEK_SET);
+			readed = fread(&A[0], sizeof(double), 1, fpA);
+			//=========================================================================
 
-			// Realiza a Multiplicação da coluna A pela Linha B
-			for (int i = 0; i < n; i++)
+			//================================ LEITURA ================================
+			// Lê a linha 'k' da matriz do arquivo 'fpB' e armazena em B
+			fseek(fpB, 0, SEEK_SET);
+			fseek(fpB, ((ulint)k * (ulint)n) * (ulint)sizeof(double), SEEK_SET);
+			readed = fread(B, sizeof(double), n, fpB);
+			//=========================================================================
+
+			for (int j = 0; j < n; j++)
 			{
-				for (int j = 0; j < n; j++)
-				{
-					C[i * n + j] += A[i] * B[j];
-					printf("A(%d,%d)*B(%d,%d) (%.f*%.f) ", i, col_a, row, j, A[i], B[j]);
-				}
-				printf("\n");
+				// Realiza a Multiplicação de A pela linha B
+				C[i * n + j] += A[0] * B[j];
+				//printf("C(%d,%d) = A(%d,%d)*B(%d,%d) (%.f*%.f)\n", i, j, i, k, k, j, A[0], B[j]);
 			}
+			//printf("\n");
 		}
 	}
+	//---------------------------------------------------------------------------------
 
-	MPI_Finalize();
-
+	// SAÍDAS
 	FILE *fp;
 	fp = fopen("matrix/C.txt", "w+");
 	for (int i = 0; i < n; i++)
@@ -97,7 +93,12 @@ int main(int argc, char *argv[])
 		fprintf(fp, "\n");
 	}
 	fclose(fp);
-	//---------------------------------------------------------------------------------
+
+	free(A);
+	free(B);
+	free(C);
+
+	MPI_Finalize();
 
 	return 0;
 }
