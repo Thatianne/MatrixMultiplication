@@ -82,18 +82,23 @@ int main(int argc, char *argv[])
 	}
 	//---------------------------------------------------------------------------------
 	// Join das matrizes calculadas
+	double *result = (double *)malloc((ulint)n * rowSize);
+	MPI_Reduce(&C, &result, n * n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	//---------------------------------------------------------------------------------
 
 	// SAÍDAS
-	FILE *fp;
-	fp = fopen("matrix/C.txt", "w+");
-	for (int i = 0; i < n; i++)
+	if (rank == 0)
 	{
-		for (int j = 0; j < n; j++)
-			fprintf(fp, "%lf ", C[i * n + j]);
-		fprintf(fp, "\n");
+		FILE *fp;
+		fp = fopen("matrix/C.txt", "w+");
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < n; j++)
+				fprintf(fp, "%lf ", result[i * n + j]);
+			fprintf(fp, "\n");
+		}
+		fclose(fp);
 	}
-	fclose(fp);
 
 	free(A);
 	free(B);
