@@ -30,7 +30,6 @@ int main(int argc, char *argv[])
 
 	size_t readed;
 
-	//tamanho das matrizes A e B	LINHA/COLUNAS		TAMANHO
 	ulint rowSize = (ulint)n * (ulint)sizeof(double);
 	double *A = (double *)malloc(rowSize);
 	double *B = (double *)malloc(rowSize);
@@ -62,9 +61,9 @@ int main(int argc, char *argv[])
 			for (int k = 0; k < n; k++)
 			{
 				C[i * n + j] += A[k] * B[k];
-				//printf("C(%d,%d) = A(%d,%d)*B(%d,%d) (%.f*%.f)\n", i, j, i, k, k, j, A[k], B[k]);
+				// printf("C(%d,%d) = A(%d,%d)*B(%d,%d) (%.f*%.f)\n", i, j, i, k, k, j, A[k], B[k]);
 			}
-			//printf("\n");
+			// printf("\n");
 		}
 	}
 	//---------------------------------------------------------------------------------
