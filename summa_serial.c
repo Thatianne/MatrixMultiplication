@@ -13,7 +13,7 @@ typedef unsigned long int ulint;
 
 int main(int argc, char *argv[])
 {
-	if (argc != 4)
+	if (argc < 4)
 	{
 		printf("Parametros invalidos, verifique...\n");
 		return -1;
@@ -27,6 +27,8 @@ int main(int argc, char *argv[])
 	FILE *fpB;
 	char *path_matriz_B = argv[3];
 	fpB = fopen(path_matriz_B, "rb");
+
+	int output = (argc > 4) ? atoi(argv[4]) : 1;
 
 	size_t readed;
 
@@ -66,15 +68,18 @@ int main(int argc, char *argv[])
 	free(B);
 
 	// SAÍDAS
-	FILE *fpC;
-	fpC = fopen("matrix/C.txt", "w+");
-	for (int i = 0; i < n; i++)
+	if (output != 0)
 	{
-		for (int j = 0; j < n; j++)
-			fprintf(fpC, "%lf ", C[i * n + j]);
-		fprintf(fpC, "\n");
+		FILE *fpC;
+		fpC = fopen("matrix/C.txt", "w+");
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < n; j++)
+				fprintf(fpC, "%lf ", C[i * n + j]);
+			fprintf(fpC, "\n");
+		}
+		fclose(fpC);
 	}
-	fclose(fpC);
 
 	free(C);
 

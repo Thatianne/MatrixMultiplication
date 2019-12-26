@@ -15,7 +15,7 @@ typedef unsigned long int ulint;
 
 int main(int argc, char *argv[])
 {
-	if (argc != 5)
+	if (argc < 5)
 	{
 		printf("Parametros invalidos (%d), verifique...\n", argc);
 		return -1;
@@ -29,6 +29,8 @@ int main(int argc, char *argv[])
 
 	char *path_matriz_B = argv[4];
 	FILE *fpB;
+
+	int output = (argc > 5) ? atoi(argv[5]) : 1;
 
 	size_t readed;
 
@@ -108,7 +110,7 @@ int main(int argc, char *argv[])
 	//---------------------------------------------------------------------------------
 
 	// SAÍDAS
-	if (rank == 0)
+	if (output != 0 && rank == 0)
 	{
 		FILE *fpC;
 		fpC = fopen("matrix/C.txt", "w+");
