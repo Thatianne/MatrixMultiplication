@@ -21,8 +21,8 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	int n = atoi(argv[1]);
-	int nThreads = atoi(argv[2]);
+	int nThreads = atoi(argv[1]);
+	int n = atoi(argv[2]);
 
 	char *path_matriz_A = argv[3];
 	FILE *fpA;
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
 	//---------------------------------------------------------------------------------
 	int k;
-#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rank, world_size) private(k, fpA, A, fpB, B, readed) schedule(dynamic)
+#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rank, rowSize, world_size) private(k, fpA, A, fpB, B, readed) schedule(dynamic)
 	for (k = rank; k < n; k += (world_size))
 	{
 		int i;
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 				// printf("C(%d,%d) = A(%d,%d)*B(%d,%d) (%.f*%.f)\n", i, j, i, k, k, j, A[0], B[j]);
 			}
 			// printf("\n");
-			
+
 			fclose(fpA);
 			free(A);
 			fclose(fpB);
