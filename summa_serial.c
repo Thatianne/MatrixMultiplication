@@ -34,8 +34,8 @@ int main(int argc, char *argv[])
 	double *A = (double *)malloc(sizeof(double));
 	double *B = (double *)malloc(rowSize);
 	double *C = (double *)calloc((ulint)n * (ulint)n, sizeof(double));
-
 	//---------------------------------------------------------------------------------
+
 	for (int k = 0; k < n; k++)
 	{
 		for (int i = 0; i < n; i++)
@@ -55,29 +55,27 @@ int main(int argc, char *argv[])
 			//=========================================================================
 
 			for (int j = 0; j < n; j++)
-			{
-				// Realiza a Multiplicação de A pela linha B
 				C[i * n + j] += A[0] * B[j];
-				// printf("C(%d,%d) = A(%d,%d)*B(%d,%d) (%.f*%.f)\n", i, j, i, k, k, j, A[0], B[j]);
-			}
-			// printf("\n");
 		}
 	}
 	//---------------------------------------------------------------------------------
 
+	fclose(fpA);
+	free(A);
+	fclose(fpB);
+	free(B);
+
 	// SAÍDAS
-	FILE *fp;
-	fp = fopen("matrix/C.txt", "w+");
+	FILE *fpC;
+	fpC = fopen("matrix/C.txt", "w+");
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < n; j++)
-			fprintf(fp, "%lf ", C[i * n + j]);
-		fprintf(fp, "\n");
+			fprintf(fpC, "%lf ", C[i * n + j]);
+		fprintf(fpC, "\n");
 	}
-	fclose(fp);
+	fclose(fpC);
 
-	free(A);
-	free(B);
 	free(C);
 
 	return 0;

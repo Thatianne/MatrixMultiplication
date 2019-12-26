@@ -36,8 +36,8 @@ int main(int argc, char *argv[])
 	double *A = (double *)malloc(rowSize);
 	double *B = (double *)malloc(rowSize);
 	double *C = (double *)calloc(matrixSize, sizeof(double));
-
 	//---------------------------------------------------------------------------------
+
 	// Configurações do MPI
 	MPI_Init(&argc, &argv);
 
@@ -52,8 +52,8 @@ int main(int argc, char *argv[])
 	MPI_Get_processor_name(processor_name, &name_len);
 
 	MPI_Status status;
-
 	//---------------------------------------------------------------------------------
+
 	for (int k = rank; k < n; k += (world_size))
 	{
 		for (int i = 0; i < n; i++)
@@ -73,36 +73,35 @@ int main(int argc, char *argv[])
 			//=========================================================================
 
 			for (int j = 0; j < n; j++)
-			{
-				// Realiza a Multiplicação de A pela linha B
 				C[i * n + j] += A[0] * B[j];
-				// printf("C(%d,%d) = A(%d,%d)*B(%d,%d) (%.f*%.f)\n", i, j, i, k, k, j, A[0], B[j]);
-			}
-			// printf("\n");
 		}
 	}
 	//---------------------------------------------------------------------------------
+
 	// Join das matrizes calculadas
 	double *result = (double *)calloc(matrixSize, sizeof(double));
 	MPI_Reduce(C, result, matrixSize, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	//---------------------------------------------------------------------------------
 
+	fclose(fpA);
+	free(A);
+	fclose(fpB);
+	free(B);
+
 	// SAÍDAS
 	if (rank == 0)
 	{
-		FILE *fp;
-		fp = fopen("matrix/C.txt", "w+");
+		FILE *fpC;
+		fpC = fopen("matrix/C.txt", "w+");
 		for (int i = 0; i < n; i++)
 		{
 			for (int j = 0; j < n; j++)
-				fprintf(fp, "%lf ", result[i * n + j]);
-			fprintf(fp, "\n");
+				fprintf(fpC, "%lf ", result[i * n + j]);
+			fprintf(fpC, "\n");
 		}
-		fclose(fp);
+		fclose(fpC);
 	}
 
-	free(A);
-	free(B);
 	free(C);
 
 	MPI_Finalize();

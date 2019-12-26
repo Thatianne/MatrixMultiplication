@@ -10,31 +10,39 @@ double randomDouble(double min, double max)
 	double div = RAND_MAX / range;
 	return min + (rand() / div);
 }
+
 double randomInt(int max)
 {
 	return rand() % max;
 }
 
-void generateMatrix(char *label, ulint n)
+double *generateMatrix(ulint n)
+{
+	double *M = malloc(n * n * sizeof(double));
+
+	for (int i = 0; i < n; i++)
+		for (int j = 0; j < n; j++)
+			//M[i * n + j] = randomDouble(-999999999.0, 999999999.0);
+			M[i * n + j] = randomInt(10);
+
+	return M;
+}
+
+void printMatrix(double *M, char *label, ulint n)
 {
 	char binFile[100];
 	sprintf(binFile, "matrix/%s", label);
 	FILE *fpBin = fopen(binFile, "w+");
-
 	char txtFile[100];
 	sprintf(txtFile, "matrix/%s_%dx%d.txt", label, (int)n, (int)n);
 	FILE *fpTxt = fopen(txtFile, "w+");
-
-	double value;
 
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < n; j++)
 		{
-			//value = randomDouble(-999999999.0, 999999999.0);
-			value = randomInt(10);
-			fwrite(&value, 1, sizeof(value), fpBin);
-			fprintf(fpTxt, "%09.16lf ", value);
+			fwrite(&M[i * n + j], 1, sizeof(double), fpBin);
+			fprintf(fpTxt, "%09.16lf ", M[i * n + j]);
 		}
 		fprintf(fpTxt, "\n");
 	}
@@ -50,8 +58,11 @@ int main(int argc, char *argv[])
 
 	srand(seed);
 
-	generateMatrix("A", n);
-	generateMatrix("B", n);
+	double *A = generateMatrix(n);
+	printMatrix(A, "A", n);
+
+	double *B = generateMatrix(n);
+	printMatrix(B, "B", n);
 
 	return 0;
 }

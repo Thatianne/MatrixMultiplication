@@ -37,13 +37,13 @@ int main(int argc, char *argv[])
 	double *A;
 	double *B;
 	double *C = (double *)calloc(matrixSize, sizeof(double));
-
 	//---------------------------------------------------------------------------------
+
 	// Configurações do OpenMP
 	omp_set_num_threads(nThreads);
 	omp_set_dynamic(0);
-
 	//---------------------------------------------------------------------------------
+
 	// Configurações do MPI
 	MPI_Init(&argc, &argv);
 
@@ -56,8 +56,8 @@ int main(int argc, char *argv[])
 	char processor_name[MPI_MAX_PROCESSOR_NAME];
 	int name_len;
 	MPI_Get_processor_name(processor_name, &name_len);
-
 	//---------------------------------------------------------------------------------
+
 	int k;
 #pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rank, rowSize, world_size) private(k, fpA, A, fpB, B, readed) schedule(dynamic)
 	for (k = rank; k < n; k += (world_size))
@@ -100,8 +100,8 @@ int main(int argc, char *argv[])
 			free(B);
 		}
 	}
-
 	//---------------------------------------------------------------------------------
+
 	// Join das matrizes calculadas
 	double *result = (double *)calloc(matrixSize, sizeof(double));
 	MPI_Reduce(C, result, n * n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
@@ -110,15 +110,15 @@ int main(int argc, char *argv[])
 	// SAÍDAS
 	if (rank == 0)
 	{
-		FILE *fp;
-		fp = fopen("matrix/C.txt", "w+");
+		FILE *fpC;
+		fpC = fopen("matrix/C.txt", "w+");
 		for (int i = 0; i < n; i++)
 		{
 			for (int j = 0; j < n; j++)
-				fprintf(fp, "%lf ", result[i * n + j]);
-			fprintf(fp, "\n");
+				fprintf(fpC, "%lf ", result[i * n + j]);
+			fprintf(fpC, "\n");
 		}
-		fclose(fp);
+		fclose(fpC);
 	}
 
 	free(C);
