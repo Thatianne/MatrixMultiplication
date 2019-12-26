@@ -7,9 +7,6 @@ do
     echo "SUMMA serial tamanho $i"
     bin/summa_serial $i matrix/A matrix/B 0
 
-    echo "STRASSEN serial tamanho $i"
-    #bin/strassen_serial $i matrix/A matrix/B 0
-
     for p in $(seq 1 13)
     do
         echo "SUMMA MPI tamanho $i NumProc $p"
