@@ -17,6 +17,8 @@ summa_mpi:
 summa_mpi_omp:
 	mpicc -Wall -fopenmp -O3 -mavx2 summa_mpi_omp.c -fopt-info-vec -o bin/summa_mpi_omp
 
+strassen_serial:
+	gcc -O3 strassen_serial.c -o bin/strassen_serial
 strassen_mpi:
 	mpicc -O3 strassen_mpi.c -o bin/strassen_mpi
 
