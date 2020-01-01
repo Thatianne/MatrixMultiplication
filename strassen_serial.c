@@ -51,12 +51,13 @@ int main(int argc, char *argv[])
 
 void fileToMatrix(char filename[], double arr[], int size)
 {
+  size_t readed;
   FILE *file = fopen(filename, "rb");
   fseek(file, 0, SEEK_SET);
   for (int i = 0; i < size; i++)
   {
     fseek(file, ((ulint)i * (ulint)size) * (ulint)sizeof(double), SEEK_SET);
-    fread(&arr[i * size], sizeof(double), size, file);
+    readed = fread(&arr[i * size], sizeof(double), size, file);
   }
 }
 
