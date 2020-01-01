@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 
 	ulint rowSize = (ulint)n * (ulint)sizeof(double);
 	ulint matrixSize = (ulint)n * (ulint)n;
-	double *A;
+	double A;
 	double *B;
 	double *C = (double *)calloc(matrixSize, sizeof(double));
 	//---------------------------------------------------------------------------------
@@ -64,26 +64,25 @@ int main(int argc, char *argv[])
 #pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rank, rowSize, world_size) private(k, fpA, A, fpB, B, readed) schedule(dynamic)
 	for (k = rank; k < n; k += (world_size))
 	{
+		//================================ LEITURA ================================
+		// Lê a linha 'k' da matriz do arquivo 'fpB' e armazena em B
+		fpB = fopen(path_matriz_B, "rb");
+		B = (double *)malloc(rowSize);
+		fseek(fpB, 0, SEEK_SET);
+		fseek(fpB, ((ulint)k * (ulint)n) * (ulint)sizeof(double), SEEK_SET);
+		readed = fread(B, sizeof(double), n, fpB);
+		//=========================================================================
+
 		int i;
-#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, k) private(i, fpA, A, fpB, B, readed) schedule(dynamic)
+#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, k, fpB, B) private(i, fpA, A, readed) schedule(dynamic)
 		for (i = 0; i < n; i++)
 		{
 			//================================ LEITURA ================================
 			// Lê o elemento A(i,k) da matriz do arquivo 'fpA' e armazena em A
 			fpA = fopen(path_matriz_A, "rb");
-			A = (double *)malloc(rowSize);
 			fseek(fpA, 0, SEEK_SET);
 			fseek(fpA, ((ulint)i * (ulint)n + (ulint)k) * (ulint)sizeof(double), SEEK_SET);
-			readed = fread(&A[0], sizeof(double), 1, fpA);
-			//=========================================================================
-
-			//================================ LEITURA ================================
-			// Lê a linha 'k' da matriz do arquivo 'fpB' e armazena em B
-			fpB = fopen(path_matriz_B, "rb");
-			B = (double *)malloc(rowSize);
-			fseek(fpB, 0, SEEK_SET);
-			fseek(fpB, ((ulint)k * (ulint)n) * (ulint)sizeof(double), SEEK_SET);
-			readed = fread(B, sizeof(double), n, fpB);
+			readed = fread(&A, sizeof(double), 1, fpA);
 			//=========================================================================
 
 			int j;
@@ -91,16 +90,15 @@ int main(int argc, char *argv[])
 			for (j = 0; j < n; j++)
 			{
 				// Realiza a Multiplicação de A pela linha B
-				C[i * n + j] += A[0] * B[j];
+				C[i * n + j] += A * B[j];
 				// printf("C(%d,%d) = A(%d,%d)*B(%d,%d) (%.f*%.f)\n", i, j, i, k, k, j, A[0], B[j]);
 			}
 			// printf("\n");
 
 			fclose(fpA);
-			free(A);
-			fclose(fpB);
-			free(B);
 		}
+		fclose(fpB);
+		free(B);
 	}
 	//---------------------------------------------------------------------------------
 
