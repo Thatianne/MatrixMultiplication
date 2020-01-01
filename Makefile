@@ -1,6 +1,6 @@
 ### Makefile ###
 
-all:matrix_generator serial_classic summa_serial summa_mpi summa_mpi_omp #strassen_mpi strassen_mpi_omp
+all:matrix_generator serial_classic summa_serial summa_mpi summa_mpi_omp strassen_serial #strassen_mpi strassen_mpi_omp
 
 matrix_generator:
 	gcc matrix_generator.c -o bin/matrix_generator
