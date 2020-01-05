@@ -8,7 +8,7 @@
 #include <sys/time.h>
 #include "mpi.h"
 
-#define ALGORITMO "strassen_serial"
+#define ALGORITMO "strassen_mpi"
 
 typedef unsigned long int ulint;
 
@@ -223,7 +223,7 @@ void strassen(double a[], double b[], double c[], int size)
         }
       }
       root = i % worldSize;
-
+      char a = workNum == i ? 'e' : 'r';
       MPI_Bcast(tResults[i], numElements, MPI_DOUBLE, root, MPI_COMM_WORLD);
 
       // if (rank == 0)
@@ -239,8 +239,9 @@ void strassen(double a[], double b[], double c[], int size)
     for (int i = 0; i < workMult; i++)
     {
       workNum = count * worldSize + rank;
-      if (workNum)
+      if (workNum == i)
       {
+        count++;
         switch (workNum)
         {
         case 0:
@@ -267,6 +268,7 @@ void strassen(double a[], double b[], double c[], int size)
         }
       }
       root = i % worldSize;
+      char a = workNum == i ? 'e' : 'r';
       MPI_Bcast(pResults[i], numElements, MPI_DOUBLE, root, MPI_COMM_WORLD);
     }
 
@@ -275,8 +277,9 @@ void strassen(double a[], double b[], double c[], int size)
     for (int i = 0; i < workC; i++)
     {
       workNum = count * worldSize + rank;
-      if (workNum == rank)
+      if (workNum == i)
       {
+        count++;
         switch (workNum)
         {
         case 0:
@@ -306,6 +309,7 @@ void strassen(double a[], double b[], double c[], int size)
         }
       }
       root = i % worldSize;
+      char a = workNum == i ? 'e' : 'r';
       MPI_Bcast(cResults[i], numElements, MPI_DOUBLE, root, MPI_COMM_WORLD);
     }
 
