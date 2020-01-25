@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
   {
     matrixToFile("matrix/strassen_C.txt", matrixC, n);
   }
-  // printMatrix(matrixC, n);
+  printMatrix(matrixC, n);
 }
 
 void fileToMatrix(char filename[], double arr[], int size)
