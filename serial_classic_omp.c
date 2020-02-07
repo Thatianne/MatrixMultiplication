@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
 	gettimeofday(&exec_t1, NULL);
 	start = clock();
 
+#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rowSize) private(i, fpA, A, fpB, B, readed) schedule(dynamic)
 	for (int i = 0; i < n; i++)
 	{
 		//================================ LEITURA ================================
@@ -64,6 +65,7 @@ int main(int argc, char *argv[])
 		comun_cpu_time += ((double)(comun_end - comun_start)) / CLOCKS_PER_SEC;
 		//=========================================================================
 
+#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, i, fpB, B) private(j, fpA, A, readed) schedule(dynamic)
 		for (int j = 0; j < n; j++)
 		{
 			//================================ LEITURA ================================
@@ -85,6 +87,7 @@ int main(int argc, char *argv[])
 			//=========================================================================
 
 			// Realiza a Multiplicação da linha A pela coluna B
+#pragma omp parallel for shared(C, n, A, B, i, j) private(k) schedule(dynamic)
 			for (int k = 0; k < n; k++)
 				C[i * n + j] += A[k] * B[k];
 		}
@@ -102,11 +105,24 @@ int main(int argc, char *argv[])
 	free(B);
 
 	// SAÍDAS
-	printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
+	FILE *log;
+	log = fopen(log_path, "a");
+	fprintf(log, "%s,%d,%f,%f,%f,%f\n", ALGORITMO, n, (cpu_time - comun_cpu_time), (exec_time - comun_time), comun_time, comun_cpu_time);
+	fclose(log);
+
 	if (output != 0)
 	{
-		printMatrix("matrix/C.txt", C, n);
+		FILE *fpC;
+		fpC = fopen("matrix/C.txt", "w+");
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < n; j++)
+				fprintf(fpC, "%lf ", C[i * n + j]);
+			fprintf(fpC, "\n");
+		}
+		fclose(fpC);
 	}
+
 	free(C);
 
 	return 0;
