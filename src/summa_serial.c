@@ -6,10 +6,9 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
-#include "mpi.h"
 #include "util.c"
 
-#define ALGORITMO "summa_mpi"
+#define ALGORITMO "summa_serial"
 
 int main(int argc, char *argv[])
 {
@@ -19,7 +18,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	int n = atoi(argv[1]);
+	ulint n = atoi(argv[1]);
 
 	char *path_matriz_A = argv[2];
 	FILE *fpA = fopen(path_matriz_A, "rb");
@@ -33,75 +32,78 @@ int main(int argc, char *argv[])
 
 	size_t readed;
 
-	ulint rowSize = (ulint)n * (ulint)sizeof(double);
-	ulint matrixSize = (ulint)n * (ulint)n;
+	ulint rowSize = n * (ulint)sizeof(double);
 	double A;
 	double *B = (double *)malloc(rowSize);
-	double *C = (double *)calloc(matrixSize, sizeof(double));
+	double *C = (double *)calloc(n * n, sizeof(double));
+
+	// LOG
+	clock_t start, end, comun_start, comun_end;
+	struct timeval exec_t1, exec_t2;
+	struct timeval comun_t1, comun_t2;
+	double exec_time = 0, comun_time = 0, cpu_time = 0, comun_cpu_time = 0;
 	//---------------------------------------------------------------------------------
 
-	// Configurações do MPI
-	MPI_Init(&argc, &argv);
+	gettimeofday(&exec_t1, NULL);
+	start = clock();
 
-	int world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-	char processor_name[MPI_MAX_PROCESSOR_NAME];
-	int name_len;
-	MPI_Get_processor_name(processor_name, &name_len);
-
-	MPI_Status status;
-	//---------------------------------------------------------------------------------
-
-	for (int k = rank; k < n; k += (world_size))
+	for (int k = 0; k < n; k++)
 	{
 		//================================ LEITURA ================================
+		gettimeofday(&comun_t1, NULL);
+		comun_start = clock();
+
 		// Lê a linha 'k' da matriz do arquivo 'fpB' e armazena em B
 		fseek(fpB, 0, SEEK_SET);
-		fseek(fpB, ((ulint)k * (ulint)n) * (ulint)sizeof(double), SEEK_SET);
+		fseek(fpB, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
 		readed = fread(B, sizeof(double), n, fpB);
+
+		comun_end = clock();
+		gettimeofday(&comun_t2, NULL);
+		comun_time += getDiffTime(comun_t1, comun_t2);
+		comun_cpu_time += ((double)(comun_end - comun_start)) / CLOCKS_PER_SEC;
 		//=========================================================================
 
 		for (int i = 0; i < n; i++)
 		{
 			//================================ LEITURA ================================
+			gettimeofday(&comun_t1, NULL);
+			comun_start = clock();
+
 			// Lê o elemento A(i,k) da matriz do arquivo 'fpA' e armazena em A
 			fseek(fpA, 0, SEEK_SET);
-			fseek(fpA, ((ulint)i * (ulint)n + (ulint)k) * (ulint)sizeof(double), SEEK_SET);
+			fseek(fpA, ((ulint)i * n + (ulint)k) * (ulint)sizeof(double), SEEK_SET);
 			readed = fread(&A, sizeof(double), 1, fpA);
+
+			comun_end = clock();
+			gettimeofday(&comun_t2, NULL);
+			comun_time += getDiffTime(comun_t1, comun_t2);
+			comun_cpu_time += ((double)(comun_end - comun_start)) / CLOCKS_PER_SEC;
 			//=========================================================================
 
-			// Realiza a Multiplicação de A pela linha B
+			// Realiza a Multiplicação do elemento A pela linha B
 			for (int j = 0; j < n; j++)
 				C[i * n + j] += A * B[j];
 		}
 	}
 	//---------------------------------------------------------------------------------
 
-	// Join das matrizes calculadas
-	double *result = (double *)calloc(matrixSize, sizeof(double));
-	MPI_Reduce(C, result, matrixSize, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	//---------------------------------------------------------------------------------
+	end = clock();
+	gettimeofday(&exec_t2, NULL);
+	cpu_time = ((double)(end - start)) / CLOCKS_PER_SEC;
+	exec_time += getDiffTime(exec_t1, exec_t2);
 
 	// SAÍDAS
-	if (rank == 0)
+	printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
+	if (output != 0)
 	{
-		// printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
-		if (output != 0)
-		{
-			printMatrix("matrix/C.txt", C, n);
-		}
+		printMatrix("matrix/C.txt", C, n);
 	}
 
 	fclose(fpA);
 	fclose(fpB);
 	free(B);
 	free(C);
-
-	MPI_Finalize();
 
 	return 0;
 }

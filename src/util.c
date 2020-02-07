@@ -30,3 +30,15 @@ void printMatrix(const char *filePath, const double *M, int n)
 	}
 	fclose(fp);
 }
+
+void printMatrixBin(const char *filePath, const double *M, int n)
+{
+	FILE *fp;
+	fp = fopen(filePath, "w+");
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < n; j++)
+			fwrite(&M[i * n + j], 1, sizeof(double), fp);
+	}
+	fclose(fp);
+}

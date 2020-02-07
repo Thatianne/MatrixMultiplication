@@ -8,7 +8,7 @@
 #include <sys/time.h>
 #include "util.c"
 
-#define ALGORITMO "summa_serial"
+#define ALGORITMO "serial_classic_omp"
 
 int main(int argc, char *argv[])
 {
@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	int n = atoi(argv[1]);
+	ulint n = atoi(argv[1]);
 
 	char *path_matriz_A = argv[2];
 	FILE *fpA = fopen(path_matriz_A, "rb");
@@ -32,10 +32,10 @@ int main(int argc, char *argv[])
 
 	size_t readed;
 
-	ulint rowSize = (ulint)n * (ulint)sizeof(double);
-	double A;
+	ulint rowSize = n * (ulint)sizeof(double);
+	double *A = (double *)malloc(rowSize);
 	double *B = (double *)malloc(rowSize);
-	double *C = (double *)calloc((ulint)n * (ulint)n, sizeof(double));
+	double *C = (double *)calloc(n * n, sizeof(double));
 
 	// LOG
 	clock_t start, end, comun_start, comun_end;
@@ -47,16 +47,17 @@ int main(int argc, char *argv[])
 	gettimeofday(&exec_t1, NULL);
 	start = clock();
 
-	for (int k = 0; k < n; k++)
+#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rowSize) private(i, fpA, A, fpB, B, readed) schedule(dynamic)
+	for (int i = 0; i < n; i++)
 	{
 		//================================ LEITURA ================================
 		gettimeofday(&comun_t1, NULL);
 		comun_start = clock();
 
-		// Lê a linha 'k' da matriz do arquivo 'fpB' e armazena em B
-		fseek(fpB, 0, SEEK_SET);
-		fseek(fpB, ((ulint)k * (ulint)n) * (ulint)sizeof(double), SEEK_SET);
-		readed = fread(B, sizeof(double), n, fpB);
+		// Lê a linha 'i' da matriz do arquivo 'fpA' e armazena em A
+		fseek(fpA, 0, SEEK_SET);
+		fseek(fpA, (ulint)i * n * (ulint)sizeof(double), SEEK_SET);
+		readed = fread(A, sizeof(double), n, fpA);
 
 		comun_end = clock();
 		gettimeofday(&comun_t2, NULL);
@@ -64,26 +65,31 @@ int main(int argc, char *argv[])
 		comun_cpu_time += ((double)(comun_end - comun_start)) / CLOCKS_PER_SEC;
 		//=========================================================================
 
-		for (int i = 0; i < n; i++)
+#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, i, fpB, B) private(j, fpA, A, readed) schedule(dynamic)
+		for (int j = 0; j < n; j++)
 		{
 			//================================ LEITURA ================================
 			gettimeofday(&comun_t1, NULL);
 			comun_start = clock();
 
-			// Lê o elemento A(i,k) da matriz do arquivo 'fpA' e armazena em A
-			fseek(fpA, 0, SEEK_SET);
-			fseek(fpA, ((ulint)i * (ulint)n + (ulint)k) * (ulint)sizeof(double), SEEK_SET);
-			readed = fread(&A, sizeof(double), 1, fpA);
+			// Lê a coluna 'j' da matriz do arquivo 'fpB' e armazena em B
+			fseek(fpB, 0, SEEK_SET);
+			for (int x = 0; x < n; x++)
+			{
+				fseek(fpB, ((ulint)x * n + (ulint)j) * (ulint)sizeof(double), SEEK_SET);
+				readed = fread(&B[x], sizeof(double), 1, fpB);
+			}
 
 			comun_end = clock();
 			gettimeofday(&comun_t2, NULL);
-			comun_time += getDiffTime(comun_t1, comun_t2);
 			comun_cpu_time += ((double)(comun_end - comun_start)) / CLOCKS_PER_SEC;
+			comun_time += getDiffTime(comun_t1, comun_t2);
 			//=========================================================================
 
-			// Realiza a Multiplicação do elemento A pela linha B
-			for (int j = 0; j < n; j++)
-				C[i * n + j] += A * B[j];
+			// Realiza a Multiplicação da linha A pela coluna B
+#pragma omp parallel for shared(C, n, A, B, i, j) private(k) schedule(dynamic)
+			for (int k = 0; k < n; k++)
+				C[i * n + j] += A[k] * B[k];
 		}
 	}
 	//---------------------------------------------------------------------------------

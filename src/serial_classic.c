@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	int n = atoi(argv[1]);
+	ulint n = atoi(argv[1]);
 
 	char *path_matriz_A = argv[2];
 	FILE *fpA = fopen(path_matriz_A, "rb");
@@ -32,10 +32,10 @@ int main(int argc, char *argv[])
 
 	size_t readed;
 
-	ulint rowSize = (ulint)n * (ulint)sizeof(double);
+	ulint rowSize = n * (ulint)sizeof(double);
 	double *A = (double *)malloc(rowSize);
 	double *B = (double *)malloc(rowSize);
-	double *C = (double *)calloc((ulint)n * (ulint)n, sizeof(double));
+	double *C = (double *)calloc(n * n, sizeof(double));
 
 	// LOG
 	clock_t start, end, comun_start, comun_end;
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 
 		// Lê a linha 'i' da matriz do arquivo 'fpA' e armazena em A
 		fseek(fpA, 0, SEEK_SET);
-		fseek(fpA, (ulint)i * (ulint)n * (ulint)sizeof(double), SEEK_SET);
+		fseek(fpA, (ulint)i * n * (ulint)sizeof(double), SEEK_SET);
 		readed = fread(A, sizeof(double), n, fpA);
 
 		comun_end = clock();
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 			fseek(fpB, 0, SEEK_SET);
 			for (int x = 0; x < n; x++)
 			{
-				fseek(fpB, ((ulint)x * (ulint)n + (ulint)j) * (ulint)sizeof(double), SEEK_SET);
+				fseek(fpB, ((ulint)x * n + (ulint)j) * (ulint)sizeof(double), SEEK_SET);
 				readed = fread(&B[x], sizeof(double), 1, fpB);
 			}
 
