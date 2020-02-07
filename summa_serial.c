@@ -6,83 +6,104 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
+#include "util.c"
 
 #define ALGORITMO "summa_serial"
 
-typedef unsigned long int ulint;
-
 int main(int argc, char *argv[])
 {
-  if (argc < 4)
-  {
-    printf("Parametros invalidos, verifique...\n");
-    return -1;
-  }
+	if (argc < 5)
+	{
+		printf("Parametros invalidos, verifique...\n");
+		return -1;
+	}
 
-  int n = atoi(argv[1]);
-  FILE *fpA;
-  char *path_matriz_A = argv[2];
-  fpA = fopen(path_matriz_A, "rb");
+	int n = atoi(argv[1]);
 
-  FILE *fpB;
-  char *path_matriz_B = argv[3];
-  fpB = fopen(path_matriz_B, "rb");
+	char *path_matriz_A = argv[2];
+	FILE *fpA = fopen(path_matriz_A, "rb");
 
-  int output = (argc > 4) ? atoi(argv[4]) : 1;
+	char *path_matriz_B = argv[3];
+	FILE *fpB = fopen(path_matriz_B, "rb");
 
-  size_t readed;
+	const char *log_path = argv[4];
 
-  ulint rowSize = (ulint)n * (ulint)sizeof(double);
-  double A;
-  double *B = (double *)malloc(rowSize);
-  double *C = (double *)calloc((ulint)n * (ulint)n, sizeof(double));
-  //---------------------------------------------------------------------------------
+	int output = (argc > 5) ? atoi(argv[5]) : 1;
 
-  for (int k = 0; k < n; k++)
-  {
-    //================================ LEITURA ================================
-    // Lê a linha 'k' da matriz do arquivo 'fpB' e armazena em B
-    fseek(fpB, 0, SEEK_SET);
-    fseek(fpB, ((ulint)k * (ulint)n) * (ulint)sizeof(double), SEEK_SET);
-    readed = fread(B, sizeof(double), n, fpB);
-    //=========================================================================
+	size_t readed;
 
-    for (int i = 0; i < n; i++)
-    {
-      //================================ LEITURA ================================
-      // Lê o elemento A(i,k) da matriz do arquivo 'fpA' e armazena em A
-      fseek(fpA, 0, SEEK_SET);
-      fseek(fpA, ((ulint)i * (ulint)n + (ulint)k) * (ulint)sizeof(double), SEEK_SET);
-      readed = fread(&A, sizeof(double), 1, fpA);
-      //=========================================================================
+	ulint rowSize = (ulint)n * (ulint)sizeof(double);
+	double A;
+	double *B = (double *)malloc(rowSize);
+	double *C = (double *)calloc((ulint)n * (ulint)n, sizeof(double));
 
-      for (int j = 0; j < n; j++)
-      {
-        C[i * n + j] += A * B[j];
-      }
-    }
-  }
-  //---------------------------------------------------------------------------------
+	// LOG
+	clock_t start, end, comun_start, comun_end;
+	struct timeval exec_t1, exec_t2;
+	struct timeval comun_t1, comun_t2;
+	double exec_time = 0, comun_time = 0, cpu_time = 0, comun_cpu_time = 0;
+	//---------------------------------------------------------------------------------
 
-  fclose(fpA);
-  fclose(fpB);
-  free(B);
+	gettimeofday(&exec_t1, NULL);
+	start = clock();
 
-  // SAÍDAS
-  if (output != 0)
-  {
-    FILE *fpC;
-    fpC = fopen("matrix/C.txt", "w+");
-    for (int i = 0; i < n; i++)
-    {
-      for (int j = 0; j < n; j++)
-        fprintf(fpC, "%lf ", C[i * n + j]);
-      fprintf(fpC, "\n");
-    }
-    fclose(fpC);
-  }
+	for (int k = 0; k < n; k++)
+	{
+		//================================ LEITURA ================================
+		gettimeofday(&comun_t1, NULL);
+		comun_start = clock();
 
-  free(C);
+		// Lê a linha 'k' da matriz do arquivo 'fpB' e armazena em B
+		fseek(fpB, 0, SEEK_SET);
+		fseek(fpB, ((ulint)k * (ulint)n) * (ulint)sizeof(double), SEEK_SET);
+		readed = fread(B, sizeof(double), n, fpB);
 
-  return 0;
+		comun_end = clock();
+		gettimeofday(&comun_t2, NULL);
+		comun_time += getDiffTime(comun_t1, comun_t2);
+		comun_cpu_time += ((double)(comun_end - comun_start)) / CLOCKS_PER_SEC;
+		//=========================================================================
+
+		for (int i = 0; i < n; i++)
+		{
+			//================================ LEITURA ================================
+			gettimeofday(&comun_t1, NULL);
+			comun_start = clock();
+
+			// Lê o elemento A(i,k) da matriz do arquivo 'fpA' e armazena em A
+			fseek(fpA, 0, SEEK_SET);
+			fseek(fpA, ((ulint)i * (ulint)n + (ulint)k) * (ulint)sizeof(double), SEEK_SET);
+			readed = fread(&A, sizeof(double), 1, fpA);
+
+			comun_end = clock();
+			gettimeofday(&comun_t2, NULL);
+			comun_time += getDiffTime(comun_t1, comun_t2);
+			comun_cpu_time += ((double)(comun_end - comun_start)) / CLOCKS_PER_SEC;
+			//=========================================================================
+
+			// Realiza a Multiplicação do elemento A pela linha B
+			for (int j = 0; j < n; j++)
+				C[i * n + j] += A * B[j];
+		}
+	}
+	//---------------------------------------------------------------------------------
+
+	end = clock();
+	gettimeofday(&exec_t2, NULL);
+	cpu_time = ((double)(end - start)) / CLOCKS_PER_SEC;
+	exec_time += getDiffTime(exec_t1, exec_t2);
+
+	// SAÍDAS
+	printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
+	if (output != 0)
+	{
+		printMatrix("matrix/C.txt", C, n);
+	}
+
+	fclose(fpA);
+	fclose(fpB);
+	free(B);
+	free(C);
+
+	return 0;
 }

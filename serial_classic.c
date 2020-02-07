@@ -96,18 +96,15 @@ int main(int argc, char *argv[])
 	cpu_time = ((double)(end - start)) / CLOCKS_PER_SEC;
 	exec_time += getDiffTime(exec_t1, exec_t2);
 
-	fclose(fpA);
-	free(A);
-	fclose(fpB);
-	free(B);
-
 	// SAÍDAS
 	printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
 	if (output != 0)
 	{
 		printMatrix("matrix/C.txt", C, n);
 	}
-	free(C);
 
-	return 0;
+	fclose(fpA);
+	fclose(fpB);
+	free(B);
+	free(C);
 }

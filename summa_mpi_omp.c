@@ -8,10 +8,9 @@
 #include <sys/time.h>
 #include "mpi.h"
 #include <omp.h>
+#include "util.c"
 
 #define ALGORITMO "summa_mpi_omp"
-
-typedef unsigned long int ulint;
 
 int main(int argc, char *argv[])
 {
@@ -87,13 +86,9 @@ int main(int argc, char *argv[])
 
 			int j;
 #pragma omp parallel for shared(C, n, A, B, i) private(j) schedule(dynamic)
+			// Realiza a Multiplicação de A pela linha B
 			for (j = 0; j < n; j++)
-			{
-				// Realiza a Multiplicação de A pela linha B
 				C[i * n + j] += A * B[j];
-				// printf("C(%d,%d) = A(%d,%d)*B(%d,%d) (%.f*%.f)\n", i, j, i, k, k, j, A[0], B[j]);
-			}
-			// printf("\n");
 
 			fclose(fpA);
 		}
@@ -108,17 +103,13 @@ int main(int argc, char *argv[])
 	//---------------------------------------------------------------------------------
 
 	// SAÍDAS
-	if (output != 0 && rank == 0)
+	if (rank == 0)
 	{
-		FILE *fpC;
-		fpC = fopen("matrix/C.txt", "w+");
-		for (int i = 0; i < n; i++)
+		// printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
+		if (output != 0)
 		{
-			for (int j = 0; j < n; j++)
-				fprintf(fpC, "%lf ", result[i * n + j]);
-			fprintf(fpC, "\n");
+			printMatrix("matrix/C.txt", C, n);
 		}
-		fclose(fpC);
 	}
 
 	free(C);

@@ -8,7 +8,7 @@
 #include <sys/time.h>
 #include "util.c"
 
-#define ALGORITMO "serial_classic"
+#define ALGORITMO "serial_classic_omp"
 
 int main(int argc, char *argv[])
 {
@@ -99,30 +99,16 @@ int main(int argc, char *argv[])
 	cpu_time = ((double)(end - start)) / CLOCKS_PER_SEC;
 	exec_time += getDiffTime(exec_t1, exec_t2);
 
-	fclose(fpA);
-	free(A);
-	fclose(fpB);
-	free(B);
-
 	// SAÍDAS
-	FILE *log;
-	log = fopen(log_path, "a");
-	fprintf(log, "%s,%d,%f,%f,%f,%f\n", ALGORITMO, n, (cpu_time - comun_cpu_time), (exec_time - comun_time), comun_time, comun_cpu_time);
-	fclose(log);
-
+	printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
 	if (output != 0)
 	{
-		FILE *fpC;
-		fpC = fopen("matrix/C.txt", "w+");
-		for (int i = 0; i < n; i++)
-		{
-			for (int j = 0; j < n; j++)
-				fprintf(fpC, "%lf ", C[i * n + j]);
-			fprintf(fpC, "\n");
-		}
-		fclose(fpC);
+		printMatrix("matrix/C.txt", C, n);
 	}
 
+	fclose(fpA);
+	fclose(fpB);
+	free(B);
 	free(C);
 
 	return 0;
