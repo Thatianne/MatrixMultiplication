@@ -8,28 +8,25 @@
 #include <sys/time.h>
 #include "util.c"
 
-#define ALGORITMO "serial_classic_omp"
+#define ALGORITMO "classic_omp"
 
 int main(int argc, char *argv[])
 {
-	if (argc < 5)
+	if (argc < 6)
 	{
 		printf("Parametros invalidos, verifique...\n");
 		return -1;
 	}
 
 	ulint n = atoi(argv[1]);
-
 	char *path_matriz_A = argv[2];
-	FILE *fpA = fopen(path_matriz_A, "rb");
-
 	char *path_matriz_B = argv[3];
-	FILE *fpB = fopen(path_matriz_B, "rb");
-
 	const char *log_path = argv[4];
+	int nThreads = atoi(argv[5]);
+	int output = (argc > 6) ? atoi(argv[6]) : 0;
 
-	int output = (argc > 5) ? atoi(argv[5]) : 1;
-
+	FILE *fpA = fopen(path_matriz_A, "rb");
+	FILE *fpB = fopen(path_matriz_B, "rb");
 	size_t readed;
 
 	ulint rowSize = n * (ulint)sizeof(double);
@@ -42,6 +39,11 @@ int main(int argc, char *argv[])
 	struct timeval exec_t1, exec_t2;
 	struct timeval comun_t1, comun_t2;
 	double exec_time = 0, comun_time = 0, cpu_time = 0, comun_cpu_time = 0;
+	//---------------------------------------------------------------------------------
+
+	// Configurações do OpenMP
+	omp_set_num_threads(nThreads);
+	omp_set_dynamic(0);
 	//---------------------------------------------------------------------------------
 
 	gettimeofday(&exec_t1, NULL);
@@ -103,7 +105,7 @@ int main(int argc, char *argv[])
 	printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
 	if (output != 0)
 	{
-		printMatrix("matrix/C.txt", C, n);
+		printMatrix("output/C.txt", C, n);
 	}
 
 	fclose(fpA);

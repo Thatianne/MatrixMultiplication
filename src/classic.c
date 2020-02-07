@@ -8,7 +8,7 @@
 #include <sys/time.h>
 #include "util.c"
 
-#define ALGORITMO "serial_classic"
+#define ALGORITMO "classic"
 
 int main(int argc, char *argv[])
 {
@@ -19,17 +19,13 @@ int main(int argc, char *argv[])
 	}
 
 	ulint n = atoi(argv[1]);
-
 	char *path_matriz_A = argv[2];
-	FILE *fpA = fopen(path_matriz_A, "rb");
-
 	char *path_matriz_B = argv[3];
-	FILE *fpB = fopen(path_matriz_B, "rb");
-
 	const char *log_path = argv[4];
-
 	int output = (argc > 5) ? atoi(argv[5]) : 1;
 
+	FILE *fpA = fopen(path_matriz_A, "rb");
+	FILE *fpB = fopen(path_matriz_B, "rb");
 	size_t readed;
 
 	ulint rowSize = n * (ulint)sizeof(double);
@@ -100,7 +96,7 @@ int main(int argc, char *argv[])
 	printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
 	if (output != 0)
 	{
-		printMatrix("matrix/C.txt", C, n);
+		printMatrix("output/C.txt", C, n);
 	}
 
 	fclose(fpA);

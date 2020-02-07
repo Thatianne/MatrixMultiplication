@@ -37,12 +37,12 @@ int main(int argc, char *argv[])
 	srand(seed);
 
 	double *A = generateMatrix(n, max);
-	printMatrix(A, "./matrix/A", n);
-	printMatrixBin(A, "./matrix/A.txt", n);
+	printMatrix("./matrix/A", A, n);
+	printMatrixBin("./matrix/A.txt", A, n);
 
 	double *B = generateMatrix(n, max);
-	printMatrix(B, "./matrix/B", n);
-	printMatrixBin(B, "./matrix/B.txt", n);
+	printMatrix("./matrix/B", B, n);
+	printMatrixBin("./matrix/B.txt", B, n);
 
 	return 0;
 }

@@ -1,12 +1,14 @@
 #!/bin/bash
-for n in 64 91 128 181 256 362 512 724 1024 1448 2048 2896 4096 5793 8192
+for n in 64 91 128
 do
-    echo "Serial clássico tamanho $n"
-    bin/serial_classic $n matrix/A matrix/B output/log.csv 0
+    echo "$n - Clássico"
+    bin/classic $n matrix/A matrix/B output/log.csv
     
-    echo "Serial clássico OMP tamanho $n"
-    bin/serial_classic_omp $n matrix/A matrix/B output/log.csv 0
+    echo "$n - Clássico OMP"
+    bin/classic_omp $n matrix/A matrix/B output/log.csv 8
 
-    echo "SUMMA serial tamanho $n"
-    bin/summa_serial $n matrix/A matrix/B output/log.csv 0
+    echo "$n - Summa serial"
+    bin/summa_serial $n matrix/A matrix/B output/log.csv
+
+    echo " "
 done

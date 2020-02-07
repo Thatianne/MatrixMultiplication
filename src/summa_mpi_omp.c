@@ -14,29 +14,27 @@
 
 int main(int argc, char *argv[])
 {
-	if (argc < 5)
+	if (argc < 6)
 	{
-		printf("Parametros invalidos (%d), verifique...\n", argc);
+		printf("Parametros invalidos, verifique...\n");
 		return -1;
 	}
 
-	int nThreads = atoi(argv[1]);
-	ulint n = atoi(argv[2]);
+	ulint n = atoi(argv[1]);
+	char *path_matriz_A = argv[2];
+	char *path_matriz_B = argv[3];
+	const char *log_path = argv[4];
+	int nThreads = atoi(argv[5]);
+	int output = (argc > 6) ? atoi(argv[6]) : 0;
 
-	char *path_matriz_A = argv[3];
-	FILE *fpA;
-
-	char *path_matriz_B = argv[4];
-	FILE *fpB;
-
-	int output = (argc > 5) ? atoi(argv[5]) : 1;
-
+	FILE *fpA = fopen(path_matriz_A, "rb");
+	FILE *fpB = fopen(path_matriz_B, "rb");
 	size_t readed;
 
 	ulint rowSize = n * (ulint)sizeof(double);
 	ulint matrixSize = n * n;
 	double A;
-	double *B;
+	double *B = (double *)malloc(rowSize);
 	double *C = (double *)calloc(matrixSize, sizeof(double));
 	//---------------------------------------------------------------------------------
 
@@ -108,7 +106,7 @@ int main(int argc, char *argv[])
 		// printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
 		if (output != 0)
 		{
-			printMatrix("matrix/C.txt", C, n);
+			printMatrix("output/C.txt", C, n);
 		}
 	}
 
