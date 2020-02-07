@@ -28,14 +28,14 @@ int main(int argc, char *argv[])
 	int nThreads = atoi(argv[5]);
 	int output = (argc > 6) ? atoi(argv[6]) : 0;
 
-	FILE *fpA = fopen(path_matriz_A, "rb");
-	FILE *fpB = fopen(path_matriz_B, "rb");
+	FILE *fpA;
+	FILE *fpB;
 	size_t readed;
 
 	ulint rowSize = n * (ulint)sizeof(double);
 	ulint matrixSize = n * n;
 	double A;
-	double *B = (double *)malloc(rowSize);
+	double *B;
 	double *C = (double *)calloc(matrixSize, sizeof(double));
 	//---------------------------------------------------------------------------------
 
