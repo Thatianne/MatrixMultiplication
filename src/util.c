@@ -14,7 +14,7 @@ void printLog(const char *filePath, const char *algoritmo, int n, double cpu_tim
 {
 	FILE *log;
 	log = fopen(filePath, "a");
-	fprintf(log, "%s,%d,%f,%f,%f,%f\n", algoritmo, n, (cpu_time - comun_cpu_time), (exec_time - comun_time), comun_cpu_time, comun_time);
+	fprintf(log, "%s,%d,%f,%f,%f,%f,%f\n", algoritmo, n, exec_time, (cpu_time - comun_cpu_time), (exec_time - comun_time), comun_cpu_time, comun_time);
 	fclose(log);
 }
 
