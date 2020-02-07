@@ -4,11 +4,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-#include <sys/time.h>
 #include "mpi.h"
 #include <omp.h>
 #include "util.c"
+
+#include <time.h>
+#include <sys/time.h>
 
 #define ALGORITMO "summa_mpi_omp"
 

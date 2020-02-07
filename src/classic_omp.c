@@ -4,9 +4,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <omp.h>
+#include "util.c"
+
 #include <time.h>
 #include <sys/time.h>
-#include "util.c"
 
 #define ALGORITMO "classic_omp"
 

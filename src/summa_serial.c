@@ -4,9 +4,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "util.c"
+
 #include <time.h>
 #include <sys/time.h>
-#include "util.c"
 
 #define ALGORITMO "summa_serial"
 
