@@ -1,78 +1,94 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
-typedef unsigned long int ulint;
+#include "util.c"
 
 ulint DIMENSOES[] = {64, 91, 128, 181, 256, 362, 512, 724, 1024, 1448, 2048, 2896, 4096, 5793, 8192};
 
-void printMatrix(double *M, char *label, ulint n)
+void createDir(const char *path);
+void print(const char *path_matriz, ulint n, const char *output);
+
+void execute(const char *path_matriz_A, const char *path_matriz_B, ulint max)
 {
-	ulint d;
-	for (int k = 0; k < sizeof(DIMENSOES) / 4; k++)
+	createDir("./matrix/strassen");
+
+	ulint n;
+	for (int x = 0; x < sizeof(DIMENSOES) / 4; x++)
 	{
-		d = DIMENSOES[k];
-		if (d > n)
+		n = DIMENSOES[x];
+		if (n > max)
 			break;
 
 		char outDir[100];
-		sprintf(outDir, "./matrix/strassen/%ld", d);
+		sprintf(outDir, "./matrix/strassen/%ld", n);
+		createDir(outDir);
+
+		char output[100];
+		sprintf(output, "%s/A", outDir);
+		print(path_matriz_A, n, output);
+		sprintf(output, "%s/B", outDir);
+		print(path_matriz_B, n, output);
+	}
+}
+
+void createDir(const char *path)
+{
 #if defined(_WIN32)
-		_mkdir(outDir);
+	_mkdir(path);
 #else
-		mkdir(outDir, 0700);
+	mkdir(path, 0700);
 #endif
+}
 
-		for (int q = 1; q <= 4; q++)
+void print(const char *path_matriz, ulint n, const char *output)
+{
+	ulint size = (n / 2);
+	for (int q = 1; q <= 4; q++)
+	{
+		char binFile[100];
+		sprintf(binFile, "%s_q%d", output, q);
+		FILE *fpBin = fopen(binFile, "w+");
+
+		FILE *fpM = fopen(path_matriz, "rb");
+		double *M = (double *)malloc(size);
+		size_t readed;
+
+		char txtFile[100];
+		sprintf(txtFile, "%s_q%d.txt", output, q);
+		FILE *fpTxt = fopen(txtFile, "w+");
+
+		ulint i_start = (ulint)(q == 1 || q == 2) ? 0 : size;
+		ulint i_end = i_start + size;
+		ulint j_start = (q == 1 || q == 3) ? 0 : size;
+		ulint j_end = j_start + size;
+
+		for (ulint i = i_start; i < i_end; i++)
 		{
-			char binFile[100];
-			sprintf(binFile, "./matrix/%ld/%s_q%d", d, label, q);
-			FILE *fpBin = fopen(binFile, "w+");
+			fseek(fpM, 0, SEEK_SET);
+			fseek(fpM, ((ulint)i * n + j_start) * (ulint)sizeof(double), SEEK_SET);
+			printf("%s %d\n", path_matriz, size);
+			readed = fread(M, sizeof(double), (int) size, fpM);
 
-			char txtFile[100];
-			sprintf(txtFile, "./matrix/%ld/%s_q%d.txt", d, label, q);
-			FILE *fpTxt = fopen(txtFile, "w+");
+			//fwrite(&M, size, sizeof(double), fpBin);
 
-			int _i = (q < 3) ? 0 : (d / 2);
-			int _j = (q % 2 != 0) ? 0 : (d / 2);
-
-			for (ulint i = _i, x = 0; x < d / 2; i++, x++)
+			for (ulint x = 0; x < size; x++)
 			{
-				for (ulint j = _j, y = 0; y < d / 2; j++, y++)
-				{
-					fwrite(&M[i * d + j], 1, sizeof(double), fpBin);
-					fprintf(fpTxt, "%09.16lf ", M[i * d + j]);
-				}
-				fprintf(fpTxt, "\n");
+				//fprintf(fpTxt, "%09.16lf ", M[x]);
 			}
-
-			fclose(fpBin);
-			fclose(fpTxt);
+			fprintf(fpTxt, "\n");
+			printf("TESTE");
 		}
+
+		fclose(fpTxt);
+		fclose(fpBin);
 	}
 }
 
 int main(int argc, char *argv[])
 {
-#if defined(_WIN32)
-	_mkdir("./matrix/strassen");
-#else
-	mkdir("./matrix/strassen", 0700);
-#endif
-
-	ulint n = (ulint)atoi(argv[1]);
-
-	char *path_matriz_M = argv[2];
-	double *M = (double *)malloc(n * n);
-	FILE *fpM = fopen(path_matriz_M, "rb");
-	size_t readed = fread(M, sizeof(double), n, fpM);
-	printMatrix(M, "A", n);
-
-	path_matriz_M = argv[3];
-	M = (double *)malloc(n * n);
-	fpM = fopen(path_matriz_M, "rb");
-	readed = fread(M, sizeof(double), n, fpM);
-	printMatrix(M, "B", n);
-
+	ulint max = (ulint)atoi(argv[1]);
+	char *path_matriz_A = argv[2];
+	char *path_matriz_B = argv[3];
+	execute(path_matriz_A, path_matriz_B, max);
 	return 0;
 }
