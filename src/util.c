@@ -42,3 +42,15 @@ void printMatrixBin(const char *filePath, const double *M, int n)
 	}
 	fclose(fp);
 }
+
+int to2Pow(ulint n)
+{
+	int pow = 2;
+
+	while (n > pow)
+	{
+		pow *= 2;
+	}
+
+	return pow;
+}

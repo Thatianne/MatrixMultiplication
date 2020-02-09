@@ -5,9 +5,8 @@
 
 void createDir(const char *path);
 void print(const char *path_matriz, ulint n, const char *output);
-int to2Pow(ulint n);
 
-void execute(const char *path_matriz_A, const char *path_matriz_B, ulint n)
+void execute(ulint n, const char *path_matriz_A, const char *path_matriz_B)
 {
 	createDir("./matrix/strassen");
 
@@ -80,23 +79,11 @@ void print(const char *path_matriz, ulint n, const char *output)
 	}
 }
 
-int to2Pow(ulint n)
-{
-	int pow = 2;
-
-	while (n >= pow)
-	{
-		pow *= 2;
-	}
-
-	return pow;
-}
-
 int main(int argc, char *argv[])
 {
 	ulint n = (ulint)atoi(argv[1]);
 	char *path_matriz_A = argv[2];
 	char *path_matriz_B = argv[3];
-	execute(path_matriz_A, path_matriz_B, n);
+	execute(n, path_matriz_A, path_matriz_B);
 	return 0;
 }
