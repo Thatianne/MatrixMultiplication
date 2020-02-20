@@ -1,12 +1,14 @@
 ### Makefile ###
 
-all:matrix_generator classic summa_serial summa_mpi summa_mpi_omp strassen_pre_processamento strassen_serial #strassen_mpi strassen_mpi_omp
+all:matrix_generator classic classic_otimizado summa_serial summa_mpi summa_mpi_omp strassen_pre_processamento strassen_serial #strassen_mpi strassen_mpi_omp
 
 matrix_generator:
 	gcc src/matrix_generator.c -o bin/matrix_generator
 
 classic:
 	gcc -O3 src/classic.c -o bin/classic
+classic_otimizado:
+	gcc -O3 src/classic_otimizado.c -o bin/classic_otimizado
 
 summa_serial:
 	gcc -O3 src/summa_serial.c -o bin/summa_serial

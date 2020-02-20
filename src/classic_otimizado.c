@@ -9,7 +9,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-#define ALGORITMO "summa_serial"
+#define ALGORITMO "classic_otimizado"
 
 int main(int argc, char *argv[])
 {
@@ -31,7 +31,6 @@ int main(int argc, char *argv[])
 
 	ulint rowSize = n * (ulint)sizeof(double);
 	double *A = (double *)malloc(rowSize);
-	double a;
 	double *B = (double *)malloc(rowSize);
 	double *C = (double *)calloc(n * n, sizeof(double));
 
@@ -45,21 +44,16 @@ int main(int argc, char *argv[])
 	gettimeofday(&exec_t1, NULL);
 	start = clock();
 
-	for (int k = 0; k < n; k++)
+	for (int i = 0; i < n; i++)
 	{
 		//================================ LEITURA ================================
 		gettimeofday(&comun_t1, NULL);
 		comun_start = clock();
 
-		// Lê a coluna 'k' da matriz do arquivo 'fpA' e armazena em A
+		// Lê a linha 'i' da matriz do arquivo 'fpA' e armazena em A
 		fseek(fpA, 0, SEEK_SET);
-		fseek(fpA, (ulint)k * n * (ulint)sizeof(double), SEEK_SET);
+		fseek(fpA, (ulint)i * n * (ulint)sizeof(double), SEEK_SET);
 		readed = fread(A, sizeof(double), n, fpA);
-
-		// Lê a linha 'k' da matriz do arquivo 'fpB' e armazena em B
-		fseek(fpB, 0, SEEK_SET);
-		fseek(fpB, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
-		readed = fread(B, sizeof(double), n, fpB);
 
 		comun_end = clock();
 		gettimeofday(&comun_t2, NULL);
@@ -67,12 +61,26 @@ int main(int argc, char *argv[])
 		comun_cpu_time += ((double)(comun_end - comun_start)) / CLOCKS_PER_SEC;
 		//=========================================================================
 
-		for (int i = 0; i < n; i++)
+		for (int j = 0; j < n; j++)
 		{
-			a = A[i];
-			// Realiza a Multiplicação do elemento A pela linha B
-			for (int j = 0; j < n; j++)
-				C[i * n + j] += a * B[j];
+			//================================ LEITURA ================================
+			gettimeofday(&comun_t1, NULL);
+			comun_start = clock();
+
+			// Lê a coluna 'j' da matriz do arquivo 'fpB' e armazena em B
+			fseek(fpB, 0, SEEK_SET);
+			fseek(fpB, (ulint)i * n * (ulint)sizeof(double), SEEK_SET);
+			readed = fread(B, sizeof(double), n, fpB);
+
+			comun_end = clock();
+			gettimeofday(&comun_t2, NULL);
+			comun_cpu_time += ((double)(comun_end - comun_start)) / CLOCKS_PER_SEC;
+			comun_time += getDiffTime(comun_t1, comun_t2);
+			//=========================================================================
+
+			// Realiza a Multiplicação da linha A pela coluna B
+			for (int k = 0; k < n; k++)
+				C[i * n + j] += A[k] * B[k];
 		}
 	}
 	//---------------------------------------------------------------------------------
@@ -93,6 +101,4 @@ int main(int argc, char *argv[])
 	fclose(fpB);
 	free(B);
 	free(C);
-
-	return 0;
 }

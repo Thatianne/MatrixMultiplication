@@ -3,4 +3,7 @@ for n in 64 91 128 181 256 362 512 724 1024 1448 2048 2896 4096 5793 8192 11585 
 do
     echo "$n - Clássico"
     bin/classic $n matrix/A matrix/B output/log.csv
+
+    echo "$n - Clássico Otimizado"
+    bin/classic_otimizado $n matrix/A matrix/B_column output/log.csv
 done

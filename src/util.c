@@ -43,6 +43,18 @@ void printMatrixBin(const char *filePath, const double *M, int n)
 	fclose(fp);
 }
 
+void printMatrixBinColumn(const char *filePath, const double *M, int n)
+{
+	FILE *fp;
+	fp = fopen(filePath, "w+");
+	for (int j = 0; j < n; j++)
+	{
+		for (int i = 0; i < n; i++)
+			fwrite(&M[i * n + j], 1, sizeof(double), fp);
+	}
+	fclose(fp);
+}
+
 int to2Pow(ulint n)
 {
 	int pow = 2;
