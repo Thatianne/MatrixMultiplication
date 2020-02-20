@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 
 		// Lê a coluna 'k' da matriz do arquivo 'fpA' e armazena em A
 		fseek(fpA, 0, SEEK_SET);
-		fseek(fpA, (ulint)k * n * (ulint)sizeof(double), SEEK_SET);
+		fseek(fpA, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
 		readed = fread(A, sizeof(double), n, fpA);
 
 		// Lê a linha 'k' da matriz do arquivo 'fpB' e armazena em B

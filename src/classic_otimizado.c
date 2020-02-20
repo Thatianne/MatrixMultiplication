@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 
 		// Lê a linha 'i' da matriz do arquivo 'fpA' e armazena em A
 		fseek(fpA, 0, SEEK_SET);
-		fseek(fpA, (ulint)i * n * (ulint)sizeof(double), SEEK_SET);
+		fseek(fpA, ((ulint)i * n) * (ulint)sizeof(double), SEEK_SET);
 		readed = fread(A, sizeof(double), n, fpA);
 
 		comun_end = clock();
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 
 			// Lê a coluna 'j' da matriz do arquivo 'fpB' e armazena em B
 			fseek(fpB, 0, SEEK_SET);
-			fseek(fpB, (ulint)i * n * (ulint)sizeof(double), SEEK_SET);
+			fseek(fpB, ((ulint)i * n) * (ulint)sizeof(double), SEEK_SET);
 			readed = fread(B, sizeof(double), n, fpB);
 
 			comun_end = clock();
