@@ -30,10 +30,11 @@ int main(int argc, char *argv[])
 	size_t readed;
 
 	ulint rowSize = n * (ulint)sizeof(double);
+	ulint matrixSize = n * n;
 	double *A = (double *)malloc(rowSize);
 	double a;
 	double *B = (double *)malloc(rowSize);
-	double *C = (double *)calloc(n * n, sizeof(double));
+	double *C = (double *)calloc(matrixSize, sizeof(double));
 
 	// LOG
 	clock_t start, end, comun_start, comun_end;

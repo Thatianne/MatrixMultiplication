@@ -45,11 +45,13 @@ int main(int argc, char *argv[])
 
 	double *A = generateMatrix(n, max);
 	printMatrix("./matrix/A.txt", A, n);
-	printMatrixBin("./matrix/A", A, n);
+	printMatrixBin("./matrix/A_row", A, n);
+	printMatrixBinColumn("./matrix/A_column", A, n);
 
 	double *B = generateMatrix(n, max);
 	printMatrix("./matrix/B.txt", B, n);
-	printMatrixBin("./matrix/B", B, n);
+	printMatrixBin("./matrix/B_row", B, n);
+	printMatrixBinColumn("./matrix/B_column", B, n);
 
 	return 0;
 }

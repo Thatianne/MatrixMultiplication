@@ -34,7 +34,8 @@ int main(int argc, char *argv[])
 
 	ulint rowSize = n * (ulint)sizeof(double);
 	ulint matrixSize = n * n;
-	double A;
+	double *A = (double *)malloc(rowSize);
+	double a;
 	double *B;
 	double *C = (double *)calloc(matrixSize, sizeof(double));
 	//---------------------------------------------------------------------------------
@@ -63,6 +64,13 @@ int main(int argc, char *argv[])
 	for (k = rank; k < n; k += (world_size))
 	{
 		//================================ LEITURA ================================
+		// Lê a coluna 'k' da matriz do arquivo 'fpA' e armazena em A
+		fpA = fopen(path_matriz_A, "rb");
+		A = (double *)malloc(rowSize);
+		fseek(fpA, 0, SEEK_SET);
+		fseek(fpA, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
+		readed = fread(A, sizeof(double), n, fpA);
+
 		// Lê a linha 'k' da matriz do arquivo 'fpB' e armazena em B
 		fpB = fopen(path_matriz_B, "rb");
 		B = (double *)malloc(rowSize);
@@ -72,33 +80,29 @@ int main(int argc, char *argv[])
 		//=========================================================================
 
 		int i;
-#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, k, fpB, B) private(i, fpA, A, readed) schedule(dynamic)
+#pragma omp parallel for shared(C, n, A, B) private(i, a) schedule(dynamic)
 		for (i = 0; i < n; i++)
 		{
-			//================================ LEITURA ================================
-			// Lê o elemento A(i,k) da matriz do arquivo 'fpA' e armazena em A
-			fpA = fopen(path_matriz_A, "rb");
-			fseek(fpA, 0, SEEK_SET);
-			fseek(fpA, ((ulint)i * n + (ulint)k) * (ulint)sizeof(double), SEEK_SET);
-			readed = fread(&A, sizeof(double), 1, fpA);
-			//=========================================================================
-
+			a = A[i];
 			int j;
-#pragma omp parallel for shared(C, n, A, B, i) private(j) schedule(dynamic)
+#pragma omp parallel for shared(C, n, a, B, i) private(j) schedule(dynamic)
 			// Realiza a Multiplicação de A pela linha B
 			for (j = 0; j < n; j++)
-				C[i * n + j] += A * B[j];
-
-			fclose(fpA);
+				C[i * n + j] += a * B[j];
 		}
+		//================================ LEITURA ================================
+		fclose(fpA);
+		free(A);
 		fclose(fpB);
 		free(B);
+		//=========================================================================
 	}
 	//---------------------------------------------------------------------------------
 
 	// Join das matrizes calculadas
 	double *result = (double *)calloc(matrixSize, sizeof(double));
 	MPI_Reduce(C, result, n * n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	free(C);
 	//---------------------------------------------------------------------------------
 
 	// SAÍDAS
@@ -107,11 +111,11 @@ int main(int argc, char *argv[])
 		// printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
 		if (output != 0)
 		{
-			printMatrix("output/C.txt", C, n);
+			printMatrix("output/C.txt", result, n);
 		}
 	}
 
-	free(C);
+	free(result);
 
 	MPI_Finalize();
 

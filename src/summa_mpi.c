@@ -32,7 +32,8 @@ int main(int argc, char *argv[])
 
 	ulint rowSize = n * (ulint)sizeof(double);
 	ulint matrixSize = n * n;
-	double A;
+	double *A = (double *)malloc(rowSize);
+	double a;
 	double *B = (double *)malloc(rowSize);
 	double *C = (double *)calloc(matrixSize, sizeof(double));
 	//---------------------------------------------------------------------------------
@@ -56,6 +57,11 @@ int main(int argc, char *argv[])
 	for (int k = rank; k < n; k += (world_size))
 	{
 		//================================ LEITURA ================================
+		// Lê a coluna 'k' da matriz do arquivo 'fpA' e armazena em A
+		fseek(fpA, 0, SEEK_SET);
+		fseek(fpA, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
+		readed = fread(A, sizeof(double), n, fpA);
+
 		// Lê a linha 'k' da matriz do arquivo 'fpB' e armazena em B
 		fseek(fpB, 0, SEEK_SET);
 		fseek(fpB, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
@@ -64,16 +70,10 @@ int main(int argc, char *argv[])
 
 		for (int i = 0; i < n; i++)
 		{
-			//================================ LEITURA ================================
-			// Lê o elemento A(i,k) da matriz do arquivo 'fpA' e armazena em A
-			fseek(fpA, 0, SEEK_SET);
-			fseek(fpA, ((ulint)i * n + (ulint)k) * (ulint)sizeof(double), SEEK_SET);
-			readed = fread(&A, sizeof(double), 1, fpA);
-			//=========================================================================
-
-			// Realiza a Multiplicação de A pela linha B
+			a = A[i];
+			// Realiza a Multiplicação do elemento A pela linha B
 			for (int j = 0; j < n; j++)
-				C[i * n + j] += A * B[j];
+				C[i * n + j] += a * B[j];
 		}
 	}
 	//---------------------------------------------------------------------------------
@@ -81,7 +81,13 @@ int main(int argc, char *argv[])
 	// Join das matrizes calculadas
 	double *result = (double *)calloc(matrixSize, sizeof(double));
 	MPI_Reduce(C, result, matrixSize, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	free(C);
 	//---------------------------------------------------------------------------------
+
+	fclose(fpA);
+	free(A);
+	fclose(fpB);
+	free(B);
 
 	// SAÍDAS
 	if (rank == 0)
@@ -89,14 +95,11 @@ int main(int argc, char *argv[])
 		// printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
 		if (output != 0)
 		{
-			printMatrix("output/C.txt", C, n);
+			printMatrix("output/C.txt", result, n);
 		}
 	}
 
-	fclose(fpA);
-	fclose(fpB);
-	free(B);
-	free(C);
+	free(result);
 
 	MPI_Finalize();
 
