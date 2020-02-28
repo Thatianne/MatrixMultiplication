@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 	//---------------------------------------------------------------------------------
 
 	// Configurações do OpenMP
-	omp_set_num_threads(nThreads);
+	omp_set_num_threads(omp_get_max_threads());
 	omp_set_dynamic(0);
 	//---------------------------------------------------------------------------------
 
@@ -59,11 +59,15 @@ int main(int argc, char *argv[])
 	//---------------------------------------------------------------------------------
 
 	int k;
+	double start, end, r_start, r_end, read_time;
+	read_time = 0;
+	start = MPI_Wtime();
 #pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rank, rowSize, world_size) private(k, fpA, A, fpB, B, readed) schedule(dynamic)
 	for (k = rank; k < n; k += (world_size))
 	{
 		//================================ LEITURA ================================
 		// Lê a coluna 'k' da matriz do arquivo 'fpA' e armazena em A
+		r_start = MPI_Wtime();
 		fpA = fopen(path_matriz_A, "rb");
 		A = (double *)malloc(rowSize);
 		fseek(fpA, 0, SEEK_SET);
@@ -76,6 +80,8 @@ int main(int argc, char *argv[])
 		fseek(fpB, 0, SEEK_SET);
 		fseek(fpB, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
 		readed = fread(B, sizeof(double), n, fpB);
+		r_end = MPI_Wtime();
+		read_time += (r_end - r_start);
 		//=========================================================================
 
 		int i;
@@ -96,6 +102,7 @@ int main(int argc, char *argv[])
 		free(B);
 		//=========================================================================
 	}
+	end = MPI_Wtime();
 	//---------------------------------------------------------------------------------
 
 	// Join das matrizes calculadas
@@ -117,7 +124,8 @@ int main(int argc, char *argv[])
 	}
 
 	free(result);
-
+	double exec_time = (end - start) - read_time;
+	printLogMPI(log_path, ALGORITMO, n, exec_time, read_time, rank, world_size);
 	MPI_Finalize();
 
 	return 0;
