@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 			a = A[i];
 			// Realiza a Multiplicação do elemento A pela linha B
 			for (int j = 0; j < n; j++)
-				C[i * n + j] += a * B[j];
+				C[i * n + j] = C[i * n + j] + (a * B[j]);
 		}
 	}
 	//---------------------------------------------------------------------------------
@@ -87,13 +87,15 @@ int main(int argc, char *argv[])
 	printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
 	if (output != 0)
 	{
-		printMatrix("output/C.txt", C, n);
+		printMatrix("output/C_summa_serial.txt", C, n);
 	}
 
 	fclose(fpA);
 	fclose(fpB);
 	free(B);
 	free(C);
+	
+	printf("done\n");
 
 	return 0;
 }

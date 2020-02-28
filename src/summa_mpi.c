@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
 
 	// Configurações do MPI
 	MPI_Init(&argc, &argv);
+	MPI_Pcontrol(0);
 
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -58,6 +59,7 @@ int main(int argc, char *argv[])
 	{
 		//================================ LEITURA ================================
 		// Lê a coluna 'k' da matriz do arquivo 'fpA' e armazena em A
+		MPI_Pcontrol(1, "communication");
 		fseek(fpA, 0, SEEK_SET);
 		fseek(fpA, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
 		readed = fread(A, sizeof(double), n, fpA);
@@ -66,8 +68,10 @@ int main(int argc, char *argv[])
 		fseek(fpB, 0, SEEK_SET);
 		fseek(fpB, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
 		readed = fread(B, sizeof(double), n, fpB);
+		MPI_Pcontrol(-1, "communication");
 		//=========================================================================
 
+		MPI_Pcontrol(2, "process");
 		for (int i = 0; i < n; i++)
 		{
 			a = A[i];
@@ -75,6 +79,7 @@ int main(int argc, char *argv[])
 			for (int j = 0; j < n; j++)
 				C[i * n + j] += a * B[j];
 		}
+		MPI_Pcontrol(-2, "process");
 	}
 	//---------------------------------------------------------------------------------
 
@@ -95,8 +100,10 @@ int main(int argc, char *argv[])
 		// printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
 		if (output != 0)
 		{
-			printMatrix("output/C.txt", result, n);
+			printMatrix("output/C_summa_mpi.txt", result, n);
 		}
+
+		printf("done\n");
 	}
 
 	free(result);

@@ -94,11 +94,13 @@ int main(int argc, char *argv[])
 	printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
 	if (output != 0)
 	{
-		printMatrix("output/C.txt", C, n);
+		printMatrix("output/C_classic_otimizado.txt", C, n);
 	}
 
 	fclose(fpA);
 	fclose(fpB);
 	free(B);
 	free(C);
+
+	printf("done\n");
 }

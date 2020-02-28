@@ -25,7 +25,7 @@ void printMatrix(const char *filePath, const double *M, int n)
 	for (int i = 0; i < n; i++)
 	{
 		for (int j = 0; j < n; j++)
-			fprintf(fp, "%lf ", M[i * n + j]);
+			fprintf(fp, "%9.9lf ", M[i * n + j]);
 		fprintf(fp, "\n");
 	}
 	fclose(fp);

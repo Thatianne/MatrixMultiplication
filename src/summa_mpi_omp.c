@@ -111,8 +111,10 @@ int main(int argc, char *argv[])
 		// printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
 		if (output != 0)
 		{
-			printMatrix("output/C.txt", result, n);
+			printMatrix("output/C_summa_mpi_omp.txt", result, n);
 		}
+	
+		printf("done\n");
 	}
 
 	free(result);

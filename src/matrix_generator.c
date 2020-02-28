@@ -23,7 +23,7 @@ double *generateMatrix(ulint n, int max)
 				M[i * n + j] = rand() % max;
 			else
 			{
-				v = randomDouble(-999999999.0, 999999999.0);
+				v = randomDouble(-99999.0, 99999.0);
 				M[i * n + j] = v;
 				// Se v é zero, um, ou um inteiro, volta o j para gerá-lo novamente
 				if (((int)v) == 0 || ((int)v) == 1 || ((int)v) == v)
