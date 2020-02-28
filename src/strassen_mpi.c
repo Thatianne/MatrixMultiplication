@@ -1,6 +1,5 @@
 #pragma GCC optimize("O3")
 #pragma GCC option("arch=native", "tune=native", "no-zero-upper")
-#pragma GCC target("avx")
 
 #include <stdio.h>
 #include <stdlib.h>
