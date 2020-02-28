@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 	double start, end, r_start, r_end, read_time;
 	read_time = 0;
 	start = MPI_Wtime();
-#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rank, rowSize, world_size) private(k, fpA, A, fpB, B, readed) schedule(dynamic)
+#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rank, rowSize, world_size, read_time) private(k, fpA, A, fpB, B, readed,r_start, r_end) schedule(dynamic)
 	for (k = rank; k < n; k += (world_size))
 	{
 		//================================ LEITURA ================================
