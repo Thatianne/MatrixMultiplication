@@ -1,6 +1,5 @@
 #pragma GCC optimize("O3")
 #pragma GCC option("arch=native", "tune=native", "no-zero-upper")
-#pragma GCC target("avx")
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,14 +51,17 @@ int main(int argc, char *argv[])
 	int name_len;
 	MPI_Get_processor_name(processor_name, &name_len);
 
+	double start, end, r_start, r_end, read_time;
+	read_time = 0;
+
 	MPI_Status status;
 	//---------------------------------------------------------------------------------
-
+	start = MPI_Wtime();
 	for (int k = rank; k < n; k += (world_size))
 	{
 		//================================ LEITURA ================================
+		r_start = MPI_Wtime();
 		// Lê a coluna 'k' da matriz do arquivo 'fpA' e armazena em A
-		MPI_Pcontrol(1, "communication");
 		fseek(fpA, 0, SEEK_SET);
 		fseek(fpA, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
 		readed = fread(A, sizeof(double), n, fpA);
@@ -68,10 +70,11 @@ int main(int argc, char *argv[])
 		fseek(fpB, 0, SEEK_SET);
 		fseek(fpB, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
 		readed = fread(B, sizeof(double), n, fpB);
-		MPI_Pcontrol(-1, "communication");
+		r_end = MPI_Wtime();
+		read_time += (r_end - r_start);
 		//=========================================================================
-
-		MPI_Pcontrol(2, "process");
+		
+		
 		for (int i = 0; i < n; i++)
 		{
 			a = A[i];
@@ -79,8 +82,9 @@ int main(int argc, char *argv[])
 			for (int j = 0; j < n; j++)
 				C[i * n + j] += a * B[j];
 		}
-		MPI_Pcontrol(-2, "process");
+		
 	}
+	end = MPI_Wtime();
 	//---------------------------------------------------------------------------------
 
 	// Join das matrizes calculadas
@@ -98,6 +102,7 @@ int main(int argc, char *argv[])
 	if (rank == 0)
 	{
 		// printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
+		
 		if (output != 0)
 		{
 			printMatrix("output/C_summa_mpi.txt", result, n);
@@ -106,7 +111,9 @@ int main(int argc, char *argv[])
 		printf("done\n");
 	}
 
+	double exec_time = (end - start) - read_time;
 	free(result);
+	printLogMPI(log_path, ALGORITMO, n, exec_time, read_time, rank, world_size);
 
 	MPI_Finalize();
 

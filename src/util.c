@@ -18,6 +18,14 @@ void printLog(const char *filePath, const char *algoritmo, int n, double cpu_tim
 	fclose(log);
 }
 
+void printLogMPI(const char *filePath, const char *algoritmo, int n, double exec_time, double read_time, const int rank, const int word_size)
+{
+	FILE *log;
+	log = fopen(filePath, "a");
+	fprintf(log, "%s,%d,%f,%f,%d, %d\n", algoritmo, n, exec_time, read_time, rank, word_size);
+	fclose(log);
+}
+
 void printMatrix(const char *filePath, const double *M, int n)
 {
 	FILE *fp;
