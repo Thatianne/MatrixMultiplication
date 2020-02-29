@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 	exec_time += getDiffTime(exec_t1, exec_t2);
 
 	// SAÍDAS
-	printLog(log_path, ALGORITMO, n, cpu_time, exec_time, read_time);
+	printLog(log_path, ALGORITMO, n, exec_time, cpu_time, read_time, read_cpu_time);
 	if (output != 0)
 	{
 		printMatrix("output/C_classic_otimizado.txt", C, n);
