@@ -37,10 +37,10 @@ int main(int argc, char *argv[])
 	double *C = (double *)calloc(matrixSize, sizeof(double));
 
 	// LOG
-	clock_t start, end, comun_start, comun_end;
+	clock_t start, end, read_start, read_end;
 	struct timeval exec_t1, exec_t2;
-	struct timeval comun_t1, comun_t2;
-	double exec_time = 0, read_time = 0, cpu_time = 0, comun_cpu_time = 0;
+	struct timeval read_t1, read_t2;
+	double exec_time = 0, read_time = 0, cpu_time = 0, read_cpu_time = 0;
 	//---------------------------------------------------------------------------------
 
 	gettimeofday(&exec_t1, NULL);
@@ -49,8 +49,8 @@ int main(int argc, char *argv[])
 	for (int k = 0; k < n; k++)
 	{
 		//================================ LEITURA ================================
-		gettimeofday(&comun_t1, NULL);
-		comun_start = clock();
+		gettimeofday(&read_t1, NULL);
+		read_start = clock();
 
 		// Lê a coluna 'k' da matriz do arquivo 'fpA' e armazena em A
 		fseek(fpA, 0, SEEK_SET);
@@ -62,10 +62,10 @@ int main(int argc, char *argv[])
 		fseek(fpB, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
 		readed = fread(B, sizeof(double), n, fpB);
 
-		comun_end = clock();
-		gettimeofday(&comun_t2, NULL);
-		read_time += getDiffTime(comun_t1, comun_t2);
-		comun_cpu_time += ((double)(comun_end - comun_start)) / CLOCKS_PER_SEC;
+		read_end = clock();
+		gettimeofday(&read_t2, NULL);
+		read_time += getDiffTime(read_t1, read_t2);
+		read_cpu_time += ((double)(read_end - read_start)) / CLOCKS_PER_SEC;
 		//=========================================================================
 
 		for (int i = 0; i < n; i++)
