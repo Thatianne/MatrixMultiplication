@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 	clock_t start, end, comun_start, comun_end;
 	struct timeval exec_t1, exec_t2;
 	struct timeval comun_t1, comun_t2;
-	double exec_time = 0, comun_time = 0, cpu_time = 0, comun_cpu_time = 0;
+	double exec_time = 0, read_time = 0, cpu_time = 0, comun_cpu_time = 0;
 	//---------------------------------------------------------------------------------
 
 	gettimeofday(&exec_t1, NULL);
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 
 		comun_end = clock();
 		gettimeofday(&comun_t2, NULL);
-		comun_time += getDiffTime(comun_t1, comun_t2);
+		read_time += getDiffTime(comun_t1, comun_t2);
 		comun_cpu_time += ((double)(comun_end - comun_start)) / CLOCKS_PER_SEC;
 		//=========================================================================
 
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 			comun_end = clock();
 			gettimeofday(&comun_t2, NULL);
 			comun_cpu_time += ((double)(comun_end - comun_start)) / CLOCKS_PER_SEC;
-			comun_time += getDiffTime(comun_t1, comun_t2);
+			read_time += getDiffTime(comun_t1, comun_t2);
 			//=========================================================================
 
 			// Realiza a Multiplicação da linha A pela coluna B
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 	exec_time += getDiffTime(exec_t1, exec_t2);
 
 	// SAÍDAS
-	printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
+	printLog(log_path, ALGORITMO, n, cpu_time, exec_time, read_time);
 	if (output != 0)
 	{
 		printMatrix("output/C_classic_otimizado.txt", C, n);

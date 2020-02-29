@@ -24,8 +24,7 @@ int main(int argc, char *argv[])
 	char *path_matriz_A = argv[2];
 	char *path_matriz_B = argv[3];
 	const char *log_path = argv[4];
-	int nThreads = atoi(argv[5]);
-	int output = (argc > 6) ? atoi(argv[6]) : 0;
+	int output = (argc > 5) ? atoi(argv[5]) : 0;
 
 	FILE *fpA;
 	FILE *fpB;
