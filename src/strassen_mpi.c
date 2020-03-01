@@ -11,14 +11,11 @@
 
 typedef unsigned long int ulint;
 
-void fileToMatrix(char fileName[], double arr[], int size);
-void printMatrix(double arr[], int size);
 void sum(double a[], double b[], double c[], int size);
 void subtract(double a[], double b[], double c[], int size);
 void baseAlgorithm(double a[], double b[], double c[], int size);
 void strassen(double a[], double b[], double c[], int size);
 void strassenSerial(double a[], double b[], double c[], int size);
-void matrixToFile(char filename[], double arr[], int size);
 
 int front = 0;
 

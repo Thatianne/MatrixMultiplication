@@ -36,12 +36,10 @@ int main(int argc, char *argv[])
 	double a;
 	double *B;
 	double *C = (double *)calloc(matrixSize, sizeof(double));
-	//---------------------------------------------------------------------------------
 
 	// Configurações do OpenMP
 	omp_set_num_threads(omp_get_max_threads());
 	omp_set_dynamic(0);
-	//---------------------------------------------------------------------------------
 
 	// Configurações do MPI
 	MPI_Init(&argc, &argv);
@@ -55,13 +53,16 @@ int main(int argc, char *argv[])
 	char processor_name[MPI_MAX_PROCESSOR_NAME];
 	int name_len;
 	MPI_Get_processor_name(processor_name, &name_len);
-	//---------------------------------------------------------------------------------
 
-	int k;
+	// LOG
 	double start, end, r_start, r_end, read_time;
 	read_time = 0;
+	//---------------------------------------------------------------------------------
+
 	start = MPI_Wtime();
-#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rank, rowSize, world_size, read_time) private(k, fpA, A, fpB, B, readed,r_start, r_end) schedule(dynamic)
+
+	int k;
+#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rank, rowSize, world_size, read_time) private(k, fpA, A, fpB, B, readed, r_start, r_end) schedule(dynamic)
 	for (k = rank; k < n; k += (world_size))
 	{
 		//================================ LEITURA ================================
@@ -101,30 +102,30 @@ int main(int argc, char *argv[])
 		free(B);
 		//=========================================================================
 	}
-	end = MPI_Wtime();
-	//---------------------------------------------------------------------------------
 
 	// Join das matrizes calculadas
 	double *result = (double *)calloc(matrixSize, sizeof(double));
 	MPI_Reduce(C, result, n * n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	free(C);
 	//---------------------------------------------------------------------------------
+
+	end = MPI_Wtime();
+	free(C);
+
+	double exec_time = (end - start) - read_time;
+	printLogMPI(log_path, ALGORITMO, n, exec_time, read_time, rank, world_size);
 
 	// SAÍDAS
 	if (rank == 0)
 	{
-		// printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
 		if (output != 0)
 		{
 			printMatrix("output/C_summa_mpi_omp.txt", result, n);
 		}
-	
+
 		printf("done\n");
 	}
 
 	free(result);
-	double exec_time = (end - start) - read_time;
-	printLogMPI(log_path, ALGORITMO, n, exec_time, read_time, rank, world_size);
 	MPI_Finalize();
 
 	return 0;

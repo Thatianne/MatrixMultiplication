@@ -35,7 +35,6 @@ int main(int argc, char *argv[])
 	double a;
 	double *B = (double *)malloc(rowSize);
 	double *C = (double *)calloc(matrixSize, sizeof(double));
-	//---------------------------------------------------------------------------------
 
 	// Configurações do MPI
 	MPI_Init(&argc, &argv);
@@ -51,12 +50,15 @@ int main(int argc, char *argv[])
 	int name_len;
 	MPI_Get_processor_name(processor_name, &name_len);
 
+	MPI_Status status;
+
+	// LOG
 	double start, end, r_start, r_end, read_time;
 	read_time = 0;
-
-	MPI_Status status;
 	//---------------------------------------------------------------------------------
+
 	start = MPI_Wtime();
+
 	for (int k = rank; k < n; k += (world_size))
 	{
 		//================================ LEITURA ================================
@@ -73,8 +75,7 @@ int main(int argc, char *argv[])
 		r_end = MPI_Wtime();
 		read_time += (r_end - r_start);
 		//=========================================================================
-		
-		
+
 		for (int i = 0; i < n; i++)
 		{
 			a = A[i];
@@ -82,27 +83,22 @@ int main(int argc, char *argv[])
 			for (int j = 0; j < n; j++)
 				C[i * n + j] += a * B[j];
 		}
-		
 	}
-	end = MPI_Wtime();
-	//---------------------------------------------------------------------------------
 
 	// Join das matrizes calculadas
 	double *result = (double *)calloc(matrixSize, sizeof(double));
 	MPI_Reduce(C, result, matrixSize, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	free(C);
 	//---------------------------------------------------------------------------------
 
-	fclose(fpA);
-	free(A);
-	fclose(fpB);
-	free(B);
+	end = MPI_Wtime();
+	free(C);
+
+	double exec_time = (end - start) - read_time;
+	printLogMPI(log_path, ALGORITMO, n, exec_time, read_time, rank, world_size);
 
 	// SAÍDAS
 	if (rank == 0)
 	{
-		// printLog(log_path, ALGORITMO, n, cpu_time, comun_cpu_time, exec_time, comun_time);
-		
 		if (output != 0)
 		{
 			printMatrix("output/C_summa_mpi.txt", result, n);
@@ -111,9 +107,12 @@ int main(int argc, char *argv[])
 		printf("done\n");
 	}
 
-	double exec_time = (end - start) - read_time;
+	fclose(fpA);
+	free(A);
+	fclose(fpB);
+	free(B);
+
 	free(result);
-	printLogMPI(log_path, ALGORITMO, n, exec_time, read_time, rank, world_size);
 
 	MPI_Finalize();
 
