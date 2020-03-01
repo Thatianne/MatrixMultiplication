@@ -57,8 +57,8 @@ int main(int argc, char *argv[])
 	// LOG
 	double start, end, r_start, r_end, read_time;
 	read_time = 0;
-	//---------------------------------------------------------------------------------
 
+	//---------------------------------------------------------------------------------
 	start = MPI_Wtime();
 
 	int k;
@@ -106,9 +106,10 @@ int main(int argc, char *argv[])
 	// Join das matrizes calculadas
 	double *result = (double *)calloc(matrixSize, sizeof(double));
 	MPI_Reduce(C, result, n * n, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-	//---------------------------------------------------------------------------------
 
 	end = MPI_Wtime();
+	//---------------------------------------------------------------------------------
+
 	free(C);
 
 	double exec_time = (end - start) - read_time;
