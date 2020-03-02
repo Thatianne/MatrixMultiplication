@@ -77,8 +77,6 @@ int main(int argc, char *argv[])
 	double exec_time = (end - start) - read_time;
 	printLogMPI(log_path, ALGORITMO, n, exec_time, read_time, rank, world_size);
 
-	printf("%lf\n", C[0]);
-
 	// SAÍDAS
 	if (rank == 0)
 	{
@@ -125,13 +123,13 @@ double *strassen_1(ulint n)
 	double *M7 = strassen_2(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
 
 	// C11 = M1 + M4 - M5 + M7
-	double *C11 = sub(sum(M1, M4, blockSize), sum(M5, M7, blockSize), blockSize);
+	double *C11 = sub(sum3(M1, M4, M7, blockSize), M5, blockSize);
 	// C12 = M3 + M5
 	double *C12 = sum(M3, M5, blockSize);
 	// C21 = M2 + M4
 	double *C21 = sum(M2, M4, blockSize);
 	// C22 = M1 - M2 + M3 + M6
-	double *C22 = sub(M1, sum3(M2, M3, M6, blockSize), blockSize);
+	double *C22 = sub(sum3(M1, M3, M6, blockSize), M2, blockSize);
 
 	double *C = join(C11, C12, C21, C22, n);
 	return C;
@@ -176,13 +174,13 @@ double *strassen_2(double *A, double *B, ulint n)
 	double *M7 = strassen_2(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
 
 	// C11 = M1 + M4 - M5 + M7
-	double *C11 = sub(sum(M1, M4, blockSize), sum(M5, M7, blockSize), blockSize);
+	double *C11 = sub(sum3(M1, M4, M7, blockSize), M5, blockSize);
 	// C12 = M3 + M5
 	double *C12 = sum(M3, M5, blockSize);
 	// C21 = M2 + M4
 	double *C21 = sum(M2, M4, blockSize);
 	// C22 = M1 - M2 + M3 + M6
-	double *C22 = sub(M1, sum3(M2, M3, M6, blockSize), blockSize);
+	double *C22 = sub(sum3(M1, M3, M6, blockSize), M2, blockSize);
 
 	double *C = join(C11, C12, C21, C22, n);
 	return C;
