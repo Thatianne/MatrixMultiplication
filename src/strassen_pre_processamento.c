@@ -6,7 +6,7 @@
 void createDir(const char *path);
 void print(const char *path_matriz, ulint n, const char *output);
 
-void execute(ulint n, const char *path_matriz_A, const char *path_matriz_B)
+void pre_process(ulint n, const char *path_matriz_A, const char *path_matriz_B)
 {
 	createDir("./matrix/strassen");
 
@@ -79,11 +79,30 @@ void print(const char *path_matriz, ulint n, const char *output)
 	}
 }
 
-int main(int argc, char *argv[])
+double *read11(const char label, ulint n)
 {
-	ulint n = (ulint)atoi(argv[1]);
-	char *path_matriz_A = argv[2];
-	char *path_matriz_B = argv[3];
-	execute(n, path_matriz_A, path_matriz_B);
-	return 0;
+	char binFile[100];
+	sprintf(binFile, "./matrix/strassen/%ld/%c_q1", n, label);
+	return readMatrix(binFile, n);
+}
+
+double *read12(const char label, ulint n)
+{
+	char binFile[100];
+	sprintf(binFile, "./matrix/strassen/%ld/%c_q2", n, label);
+	return readMatrix(binFile, n);
+}
+
+double *read21(const char label, ulint n)
+{
+	char binFile[100];
+	sprintf(binFile, "./matrix/strassen/%ld/%c_q3", n, label);
+	return readMatrix(binFile, n);
+}
+
+double *read22(const char label, ulint n)
+{
+	char binFile[100];
+	sprintf(binFile, "./matrix/strassen/%ld/%c_q4", n, label);
+	return readMatrix(binFile, n);
 }

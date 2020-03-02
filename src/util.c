@@ -74,3 +74,15 @@ int to2Pow(ulint n)
 
 	return pow;
 }
+
+double *readMatrix(const char *filePath, ulint n)
+{
+	double *M = (double *)malloc(n * n * (ulint)sizeof(double));
+	FILE *fp = fopen(filePath, "rb");
+	size_t readed;
+
+	fseek(fp, 0, SEEK_SET);
+	readed = fread(M, sizeof(double), n * n, fp);
+
+	return M;
+}
