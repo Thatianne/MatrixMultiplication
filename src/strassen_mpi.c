@@ -14,6 +14,7 @@ typedef unsigned long int ulint;
 
 double *strassen_1(ulint n);
 double *strassen_2(double *A, double *B, ulint n);
+double *strassen_3(double *A, double *B, ulint n);
 double *sum(double *A, double *B, ulint n);
 double *sum3(double *A, double *B, double *C, ulint n);
 double *sub(double *A, double *B, ulint n);
@@ -93,6 +94,7 @@ int main(int argc, char *argv[])
 	return 0;
 }
 
+// Executa a primeira etapa do código, utilizando os quadrantes da primeira divisão da matriz
 double *strassen_1(ulint n)
 {
 	ulint blockSize = n / (ulint)2;
@@ -131,10 +133,10 @@ double *strassen_1(ulint n)
 	// C22 = M1 - M2 + M3 + M6
 	double *C22 = sub(sum3(M1, M3, M6, blockSize), M2, blockSize);
 
-	double *C = join(C11, C12, C21, C22, n);
-	return C;
+	return join(C11, C12, C21, C22, n);
 }
 
+// Executa a segunda etapa do código, utilizado para calcular os primeiros Ms e Cs da etapa 1
 double *strassen_2(double *A, double *B, ulint n)
 {
 	if (n == 1)
@@ -159,19 +161,19 @@ double *strassen_2(double *A, double *B, ulint n)
 	split(B, B11, B12, B21, B22, n);
 
 	// M1 = (A11 + A22) * (B11 + B22)
-	double *M1 = strassen_2(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
+	double *M1 = strassen_3(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
 	// M2 = (A21 + A22) * B11
-	double *M2 = strassen_2(sum(A21, A22, blockSize), B11, blockSize);
+	double *M2 = strassen_3(sum(A21, A22, blockSize), B11, blockSize);
 	// M3 = A11 * (B12 - B22)
-	double *M3 = strassen_2(A11, sub(B12, B22, blockSize), blockSize);
+	double *M3 = strassen_3(A11, sub(B12, B22, blockSize), blockSize);
 	// M4 = A22 * (B21 - B11)
-	double *M4 = strassen_2(A22, sub(B21, B11, blockSize), blockSize);
+	double *M4 = strassen_3(A22, sub(B21, B11, blockSize), blockSize);
 	// M5 = (A11 + A12) * B22
-	double *M5 = strassen_2(sum(A11, A12, blockSize), B22, blockSize);
+	double *M5 = strassen_3(sum(A11, A12, blockSize), B22, blockSize);
 	// M6 = (A21 - A11) * (B11 + B12)
-	double *M6 = strassen_2(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
+	double *M6 = strassen_3(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
 	// M7 = (A12 - A22) * (B21 + B22)
-	double *M7 = strassen_2(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
+	double *M7 = strassen_3(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
 
 	// C11 = M1 + M4 - M5 + M7
 	double *C11 = sub(sum3(M1, M4, M7, blockSize), M5, blockSize);
@@ -182,8 +184,57 @@ double *strassen_2(double *A, double *B, ulint n)
 	// C22 = M1 - M2 + M3 + M6
 	double *C22 = sub(sum3(M1, M3, M6, blockSize), M2, blockSize);
 
-	double *C = join(C11, C12, C21, C22, n);
-	return C;
+	return join(C11, C12, C21, C22, n);
+}
+
+double *strassen_3(double *A, double *B, ulint n)
+{
+	if (n == 1)
+	{
+		double *C = (double *)calloc(1, sizeof(double));
+		C[0] = A[0] * B[0];
+		return C;
+	}
+
+	ulint blockSize = n / (ulint)2;
+	ulint mallocSize = (ulint)blockSize * (ulint)blockSize * (ulint)sizeof(double);
+
+	double *A11 = (double *)malloc(mallocSize);
+	double *A12 = (double *)malloc(mallocSize);
+	double *A21 = (double *)malloc(mallocSize);
+	double *A22 = (double *)malloc(mallocSize);
+	split(A, A11, A12, A21, A22, n);
+	double *B11 = (double *)malloc(mallocSize);
+	double *B12 = (double *)malloc(mallocSize);
+	double *B21 = (double *)malloc(mallocSize);
+	double *B22 = (double *)malloc(mallocSize);
+	split(B, B11, B12, B21, B22, n);
+
+	// M1 = (A11 + A22) * (B11 + B22)
+	double *M1 = strassen_3(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
+	// M2 = (A21 + A22) * B11
+	double *M2 = strassen_3(sum(A21, A22, blockSize), B11, blockSize);
+	// M3 = A11 * (B12 - B22)
+	double *M3 = strassen_3(A11, sub(B12, B22, blockSize), blockSize);
+	// M4 = A22 * (B21 - B11)
+	double *M4 = strassen_3(A22, sub(B21, B11, blockSize), blockSize);
+	// M5 = (A11 + A12) * B22
+	double *M5 = strassen_3(sum(A11, A12, blockSize), B22, blockSize);
+	// M6 = (A21 - A11) * (B11 + B12)
+	double *M6 = strassen_3(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
+	// M7 = (A12 - A22) * (B21 + B22)
+	double *M7 = strassen_3(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
+
+	// C11 = M1 + M4 - M5 + M7
+	double *C11 = sub(sum3(M1, M4, M7, blockSize), M5, blockSize);
+	// C12 = M3 + M5
+	double *C12 = sum(M3, M5, blockSize);
+	// C21 = M2 + M4
+	double *C21 = sum(M2, M4, blockSize);
+	// C22 = M1 - M2 + M3 + M6
+	double *C22 = sub(sum3(M1, M3, M6, blockSize), M2, blockSize);
+
+	return join(C11, C12, C21, C22, n);
 }
 
 double *sum(double *A, double *B, ulint n)
