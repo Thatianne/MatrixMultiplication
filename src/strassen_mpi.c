@@ -9,6 +9,7 @@
 #include "mpi.h"
 
 #define ALGORITMO "strassen_mpi"
+#define MAIN_RANK 1 // O processo que irá juntar os quadrantes de C e imprimir o resutlado
 
 typedef unsigned long int ulint;
 
@@ -20,6 +21,7 @@ double *sum3(double *A, double *B, double *C, ulint n);
 double *sub(double *A, double *B, ulint n);
 double *split(double *M, double *M11, double *M12, double *M21, double *M22, ulint n);
 double *join(double *C11, double *C12, double *C21, double *C22, ulint n);
+int isMainRank(int rank);
 
 int front = 0;
 
@@ -42,7 +44,6 @@ int main(int argc, char *argv[])
 
 	// Configurações do MPI
 	MPI_Init(&argc, &argv);
-	MPI_Pcontrol(0);
 
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -67,7 +68,10 @@ int main(int argc, char *argv[])
 	//---------------------------------------------------------------------------------
 	start = MPI_Wtime();
 
-	double *C = strassen_1(world_size, rank, n);
+	if (rank != 0 || world_size == 1)
+	{
+		double *C = strassen_1(world_size, rank, n);
+	}
 
 	end = MPI_Wtime();
 	//---------------------------------------------------------------------------------
@@ -76,7 +80,7 @@ int main(int argc, char *argv[])
 	printLogMPI(log_path, ALGORITMO, n, exec_time, read_time, rank, world_size);
 
 	// SAÍDAS
-	if (rank == 0)
+	if (isMainRank(world_size, rank))
 	{
 		if (output != 0)
 		{
@@ -130,7 +134,11 @@ double *strassen_1(int world_size, int rank, ulint n)
 	// C22 = M1 - M2 + M3 + M6
 	double *C22 = sub(sum3(M1, M3, M6, blockSize), M2, blockSize);
 
-	return join(C11, C12, C21, C22, n);
+	//
+	if (isMainRank(world_size, rank))
+		return join(C11, C12, C21, C22, n);
+	else
+		return (double *)calloc(1, sizeof(double));
 }
 
 // Executa a segunda etapa do código, utilizado para calcular os primeiros Ms e Cs da etapa 1
@@ -312,4 +320,9 @@ double *join(double *C11, double *C12, double *C21, double *C22, ulint n)
 	}
 
 	return C;
+}
+
+int isMainRank(int world_size, int rank)
+{
+	return (rank == MAIN_RANK || world_size == 1);
 }

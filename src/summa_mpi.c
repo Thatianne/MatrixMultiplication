@@ -38,7 +38,6 @@ int main(int argc, char *argv[])
 
 	// Configurações do MPI
 	MPI_Init(&argc, &argv);
-	MPI_Pcontrol(0);
 
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
