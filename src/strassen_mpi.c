@@ -12,7 +12,7 @@
 
 typedef unsigned long int ulint;
 
-double *strassen_1(ulint n);
+double *strassen_1(int world_size, int rank, ulint n);
 double *strassen_2(double *A, double *B, ulint n);
 double *strassen_3(double *A, double *B, ulint n);
 double *sum(double *A, double *B, ulint n);
@@ -61,16 +61,13 @@ int main(int argc, char *argv[])
 	read_time = 0;
 
 	//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	if (rank == 0)
-	{
-		pre_process(n, path_matriz_A, path_matriz_B);
-	}
+	pre_process(rank, n, path_matriz_A, path_matriz_B);
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	//---------------------------------------------------------------------------------
 	start = MPI_Wtime();
 
-	double *C = strassen_1(n);
+	double *C = strassen_1(world_size, rank, n);
 
 	end = MPI_Wtime();
 	//---------------------------------------------------------------------------------
@@ -95,19 +92,19 @@ int main(int argc, char *argv[])
 }
 
 // Executa a primeira etapa do código, utilizando os quadrantes da primeira divisão da matriz
-double *strassen_1(ulint n)
+double *strassen_1(int world_size, int rank, ulint n)
 {
 	ulint blockSize = n / (ulint)2;
 	ulint mallocSize = (ulint)blockSize * (ulint)blockSize * (ulint)sizeof(double);
 
-	double *A11 = read11('A', n);
-	double *A12 = read12('A', n);
-	double *A21 = read21('A', n);
-	double *A22 = read22('A', n);
-	double *B11 = read11('B', n);
-	double *B12 = read12('B', n);
-	double *B21 = read21('B', n);
-	double *B22 = read22('B', n);
+	double *A11 = read11(rank, 'A', n);
+	double *A12 = read12(rank, 'A', n);
+	double *A21 = read21(rank, 'A', n);
+	double *A22 = read22(rank, 'A', n);
+	double *B11 = read11(rank, 'B', n);
+	double *B12 = read12(rank, 'B', n);
+	double *B21 = read21(rank, 'B', n);
+	double *B22 = read22(rank, 'B', n);
 
 	// M1 = (A11 + A22) * (B11 + B22)
 	double *M1 = strassen_2(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);

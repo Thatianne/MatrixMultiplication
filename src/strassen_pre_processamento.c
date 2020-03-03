@@ -6,12 +6,13 @@
 void createDir(const char *path);
 void print(const char *path_matriz, ulint n, const char *output);
 
-void pre_process(ulint n, const char *path_matriz_A, const char *path_matriz_B)
+void pre_process(int rank, ulint n, const char *path_matriz_A, const char *path_matriz_B)
 {
-	createDir("./matrix/strassen");
-
 	char outDir[100];
-	sprintf(outDir, "./matrix/strassen/%ld", n);
+	createDir("./matrix/strassen/");
+	sprintf(outDir, "./matrix/strassen/rank_%d", rank);
+	createDir(outDir);
+	sprintf(outDir, "./matrix/strassen/rank_%d/%ld", rank, n);
 	createDir(outDir);
 
 	char output[100];
@@ -79,30 +80,30 @@ void print(const char *path_matriz, ulint n, const char *output)
 	}
 }
 
-double *read11(const char label, ulint n)
+double *read11(int rank, const char label, ulint n)
 {
 	char binFile[100];
-	sprintf(binFile, "./matrix/strassen/%ld/%c_q1", n, label);
+	sprintf(binFile, "./matrix/strassen/rank_%d/%ld/%c_q1", rank, n, label);
 	return readMatrix(binFile, n);
 }
 
-double *read12(const char label, ulint n)
+double *read12(int rank, const char label, ulint n)
 {
 	char binFile[100];
-	sprintf(binFile, "./matrix/strassen/%ld/%c_q2", n, label);
+	sprintf(binFile, "./matrix/strassen/rank_%d/%ld/%c_q2", rank, n, label);
 	return readMatrix(binFile, n);
 }
 
-double *read21(const char label, ulint n)
+double *read21(int rank, const char label, ulint n)
 {
 	char binFile[100];
-	sprintf(binFile, "./matrix/strassen/%ld/%c_q3", n, label);
+	sprintf(binFile, "./matrix/strassen/rank_%d/%ld/%c_q3", rank, n, label);
 	return readMatrix(binFile, n);
 }
 
-double *read22(const char label, ulint n)
+double *read22(int rank, const char label, ulint n)
 {
 	char binFile[100];
-	sprintf(binFile, "./matrix/strassen/%ld/%c_q4", n, label);
+	sprintf(binFile, "./matrix/strassen/rank_%d/%ld/%c_q4", rank, n, label);
 	return readMatrix(binFile, n);
 }
