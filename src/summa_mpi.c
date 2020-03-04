@@ -61,7 +61,6 @@ int main(int argc, char *argv[])
 	for (int k = rank; k < n; k += (world_size))
 	{
 		//================================ LEITURA ================================
-		r_start = MPI_Wtime();
 		// Lê a coluna 'k' da matriz do arquivo 'fpA' e armazena em A
 		fseek(fpA, 0, SEEK_SET);
 		fseek(fpA, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
@@ -71,8 +70,6 @@ int main(int argc, char *argv[])
 		fseek(fpB, 0, SEEK_SET);
 		fseek(fpB, ((ulint)k * n) * (ulint)sizeof(double), SEEK_SET);
 		readed = fread(B, sizeof(double), n, fpB);
-		r_end = MPI_Wtime();
-		read_time += (r_end - r_start);
 		//=========================================================================
 
 		for (int i = 0; i < n; i++)
@@ -107,12 +104,16 @@ int main(int argc, char *argv[])
 	{
 
 		//exec_total+=exec_time;
-		//printLogMPI(log_path, ALGORITMO, n, exec_time, read_time, rank, world_size);,
+		
 		double max_time = 0;
+		double total_time = 0;
 		for (int i=0; i < world_size; i++){
 			if(times_result[i] > max_time)
 				max_time = times_result[i];
+			total_time+=times_result[i];
+			
 		}
+		printLogMPI(log_path, ALGORITMO, n, total_time, max_time, rank, world_size);
 		if (output != 0)
 		{
 			printMatrix("output/C_summa_mpi.txt", result, n);
