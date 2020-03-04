@@ -646,6 +646,26 @@ double *strassen_3(double *A, double *B, ulint n)
 	return join(C11, C12, C21, C22, n);
 }
 
+int isMainRank()
+{
+	int world_size;
+	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+	return (world_size > MAIN_RANK && rank == MAIN_RANK) || (world_size < MAIN_RANK && rank == world_size - 1);
+}
+
+int getMainRank()
+{
+	int world_size;
+	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+	return (world_size > MAIN_RANK) ? MAIN_RANK : (world_size - 1);
+}
+
 double *sum(double *A, double *B, ulint n)
 {
 	double *C = (double *)calloc(n * n, sizeof(double));
@@ -724,24 +744,4 @@ double *join(double *C11, double *C12, double *C21, double *C22, ulint n)
 	}
 
 	return C;
-}
-
-int isMainRank()
-{
-	int world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-	return (world_size > MAIN_RANK && rank == MAIN_RANK) || (world_size < MAIN_RANK && rank == world_size - 1);
-}
-
-int getMainRank()
-{
-	int world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-	return (world_size > MAIN_RANK) ? MAIN_RANK : (world_size - 1);
 }

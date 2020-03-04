@@ -6,14 +6,14 @@ do
     echo "$n - Summa MPI p$p"
         mpirun -np $p --hostfile hostfile bin/summa_mpi $n matrix/A_column matrix/B_row output/log.csv
 
-        echo "$n - Strassen MPI p$p"
+    echo "$n - Strassen MPI p$p"
         mpirun -np $p --hostfile hostfile bin/strassen_mpi $n matrix/A_row matrix/B_row output/log.csv
 
-        echo "$n - Summa MPI OMP p$p"
-            mpirun -np $p --hostfile hostfile bin/summa_mpi_omp $n matrix/A_column matrix/B_row output/log.csv
+    echo "$n - Summa MPI OMP p$p"
+        mpirun -np $p --mca orte_base_help_aggregate 0 --hostfile hostfile bin/summa_mpi_omp $n matrix/A_column matrix/B_row output/log.csv
 
-        echo "$n - Strassen MPI OMP p$p"
-            mpirun -np $p --hostfile hostfile bin/strassen_mpi_omp $n matrix/A_row matrix/B_row output/log.csv
+    echo "$n - Strassen MPI OMP p$p"
+        mpirun -np $p --mca orte_base_help_aggregate 0 --hostfile hostfile bin/strassen_mpi_omp $n matrix/A_row matrix/B_row output/log.csv
         done
     done
 done
