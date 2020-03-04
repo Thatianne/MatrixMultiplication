@@ -102,7 +102,8 @@ double *strassen_1(ulint n)
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	ulint blockSize = n / (ulint)2;
-	ulint mallocSize = blockSize * blockSize * (ulint)sizeof(double);
+	ulint blockQtd = blockSize * blockSize;
+	ulint mallocSize = blockQtd * (ulint)sizeof(double);
 
 	double *A11 = read11(rank, 'A', n);
 	double *A12 = read12(rank, 'A', n);
@@ -142,8 +143,8 @@ double *strassen_1(ulint n)
 	{
 		// M1 = (A11 + A22) * (B11 + B22)
 		M1 = strassen_2(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
-		MPI_Isend(M1, n, MPI_DOUBLE, rankGrupo6, 1, MPI_COMM_WORLD, &reqM1);
-		MPI_Isend(M1, n, MPI_DOUBLE, rankGrupo7, 1, MPI_COMM_WORLD, &reqM1);
+		MPI_Isend(M1, blockQtd, MPI_DOUBLE, rankGrupo6, 1, MPI_COMM_WORLD, &reqM1);
+		MPI_Isend(M1, blockQtd, MPI_DOUBLE, rankGrupo7, 1, MPI_COMM_WORLD, &reqM1);
 	}
 
 	// **************** Task 4 ****************
@@ -151,8 +152,8 @@ double *strassen_1(ulint n)
 	{
 		// M4 = A22 * (B21 - B11)
 		M4 = strassen_2(A22, sub(B21, B11, blockSize), blockSize);
-		MPI_Isend(M4, n, MPI_DOUBLE, rankGrupo2, 4, MPI_COMM_WORLD, &reqM4);
-		MPI_Isend(M4, n, MPI_DOUBLE, rankGrupo7, 4, MPI_COMM_WORLD, &reqM4);
+		MPI_Isend(M4, blockQtd, MPI_DOUBLE, rankGrupo2, 4, MPI_COMM_WORLD, &reqM4);
+		MPI_Isend(M4, blockQtd, MPI_DOUBLE, rankGrupo7, 4, MPI_COMM_WORLD, &reqM4);
 	}
 
 	// **************** Task 5 ****************
@@ -160,19 +161,19 @@ double *strassen_1(ulint n)
 	{
 		// M5 = (A11 + A12) * B22
 		M5 = strassen_2(sum(A11, A12, blockSize), B22, blockSize);
-		MPI_Isend(M5, n, MPI_DOUBLE, rankGrupo3, 5, MPI_COMM_WORLD, &reqM5);
-		MPI_Isend(M5, n, MPI_DOUBLE, rankGrupo7, 5, MPI_COMM_WORLD, &reqM5);
+		MPI_Isend(M5, blockQtd, MPI_DOUBLE, rankGrupo3, 5, MPI_COMM_WORLD, &reqM5);
+		MPI_Isend(M5, blockQtd, MPI_DOUBLE, rankGrupo7, 5, MPI_COMM_WORLD, &reqM5);
 	}
 
 	// **************** Task 2 ****************
 	if (grupo2)
 	{
 		M4 = (double *)malloc(mallocSize);
-		MPI_Irecv(M4, n, MPI_DOUBLE, rankGrupo4, 4, MPI_COMM_WORLD, &reqM4);
+		MPI_Irecv(M4, blockQtd, MPI_DOUBLE, rankGrupo4, 4, MPI_COMM_WORLD, &reqM4);
 
 		// M2 = (A21 + A22) * B11
 		M2 = strassen_2(sum(A21, A22, blockSize), B11, blockSize);
-		MPI_Isend(M2, n, MPI_DOUBLE, rankGrupo6, 2, MPI_COMM_WORLD, &reqM2);
+		MPI_Isend(M2, blockQtd, MPI_DOUBLE, rankGrupo6, 2, MPI_COMM_WORLD, &reqM2);
 
 		MPI_Wait(&reqM4, &status4);
 
@@ -180,18 +181,18 @@ double *strassen_1(ulint n)
 		C21 = sum(M2, M4, blockSize);
 		c21Init = 1;
 		if (!isMainRank())
-			MPI_Isend(C21, n, MPI_DOUBLE, getMainRank(), 10, MPI_COMM_WORLD, &reqC21);
+			MPI_Isend(C21, blockQtd, MPI_DOUBLE, getMainRank(), 10, MPI_COMM_WORLD, &reqC21);
 	}
 
 	// **************** Task 3 ****************
 	if (grupo3)
 	{
 		M5 = (double *)malloc(mallocSize);
-		MPI_Irecv(M5, n, MPI_DOUBLE, rankGrupo5, 5, MPI_COMM_WORLD, &reqM5);
+		MPI_Irecv(M5, blockQtd, MPI_DOUBLE, rankGrupo5, 5, MPI_COMM_WORLD, &reqM5);
 
 		// M3 = A11 * (B12 - B22)
 		M3 = strassen_2(A11, sub(B12, B22, blockSize), blockSize);
-		MPI_Isend(M3, n, MPI_DOUBLE, rankGrupo6, 3, MPI_COMM_WORLD, &reqM3);
+		MPI_Isend(M3, blockQtd, MPI_DOUBLE, rankGrupo6, 3, MPI_COMM_WORLD, &reqM3);
 
 		MPI_Wait(&reqM5, &status5);
 
@@ -199,20 +200,20 @@ double *strassen_1(ulint n)
 		C12 = sum(M3, M5, blockSize);
 		c12Init = 1;
 		if (!isMainRank())
-			MPI_Isend(C12, n, MPI_DOUBLE, getMainRank(), 9, MPI_COMM_WORLD, &reqC12);
+			MPI_Isend(C12, blockQtd, MPI_DOUBLE, getMainRank(), 9, MPI_COMM_WORLD, &reqC12);
 	}
 
 	// **************** Task 6 ****************
 	if (grupo6)
 	{
 		M1 = (double *)malloc(mallocSize);
-		MPI_Irecv(M1, n, MPI_DOUBLE, rankGrupo1, 1, MPI_COMM_WORLD, &reqM1);
+		MPI_Irecv(M1, blockQtd, MPI_DOUBLE, rankGrupo1, 1, MPI_COMM_WORLD, &reqM1);
 
 		M2 = (double *)malloc(mallocSize);
-		MPI_Irecv(M2, n, MPI_DOUBLE, rankGrupo2, 2, MPI_COMM_WORLD, &reqM2);
+		MPI_Irecv(M2, blockQtd, MPI_DOUBLE, rankGrupo2, 2, MPI_COMM_WORLD, &reqM2);
 
 		M3 = (double *)malloc(mallocSize);
-		MPI_Irecv(M3, n, MPI_DOUBLE, rankGrupo3, 3, MPI_COMM_WORLD, &reqM3);
+		MPI_Irecv(M3, blockQtd, MPI_DOUBLE, rankGrupo3, 3, MPI_COMM_WORLD, &reqM3);
 
 		// M6 = (A21 - A11) * (B11 + B12)
 		M6 = strassen_2(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
@@ -225,20 +226,20 @@ double *strassen_1(ulint n)
 		C22 = sub(sum3(M1, M3, M6, blockSize), M2, blockSize);
 		c22Init = 1;
 		if (!isMainRank())
-			MPI_Isend(C22, n, MPI_DOUBLE, getMainRank(), 11, MPI_COMM_WORLD, &reqC22);
+			MPI_Isend(C22, blockQtd, MPI_DOUBLE, getMainRank(), 11, MPI_COMM_WORLD, &reqC22);
 	}
 
 	// **************** Task 7 ****************
 	if (grupo7)
 	{
 		M1 = (double *)malloc(mallocSize);
-		MPI_Irecv(M1, n, MPI_DOUBLE, rankGrupo1, 1, MPI_COMM_WORLD, &reqM1);
+		MPI_Irecv(M1, blockQtd, MPI_DOUBLE, rankGrupo1, 1, MPI_COMM_WORLD, &reqM1);
 
 		M4 = (double *)malloc(mallocSize);
-		MPI_Irecv(M4, n, MPI_DOUBLE, rankGrupo4, 4, MPI_COMM_WORLD, &reqM4);
+		MPI_Irecv(M4, blockQtd, MPI_DOUBLE, rankGrupo4, 4, MPI_COMM_WORLD, &reqM4);
 
 		M5 = (double *)malloc(mallocSize);
-		MPI_Irecv(M5, n, MPI_DOUBLE, rankGrupo5, 5, MPI_COMM_WORLD, &reqM5);
+		MPI_Irecv(M5, blockQtd, MPI_DOUBLE, rankGrupo5, 5, MPI_COMM_WORLD, &reqM5);
 
 		// M7 = (A12 - A22) * (B21 + B22)
 		M7 = strassen_2(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
@@ -251,7 +252,7 @@ double *strassen_1(ulint n)
 		C11 = sub(sum3(M1, M4, M7, blockSize), M5, blockSize);
 		c11Init = 1;
 		if (!isMainRank())
-			MPI_Isend(C11, n, MPI_DOUBLE, getMainRank(), 8, MPI_COMM_WORLD, &reqC11);
+			MPI_Isend(C11, blockQtd, MPI_DOUBLE, getMainRank(), 8, MPI_COMM_WORLD, &reqC11);
 	}
 
 	if (!isMainRank())
@@ -262,22 +263,22 @@ double *strassen_1(ulint n)
 		if (!c11Init)
 		{
 			C11 = (double *)malloc(mallocSize);
-			MPI_Irecv(C11, n, MPI_DOUBLE, rankGrupo7, 8, MPI_COMM_WORLD, &reqC11);
+			MPI_Irecv(C11, blockQtd, MPI_DOUBLE, rankGrupo7, 8, MPI_COMM_WORLD, &reqC11);
 		}
 		if (!c12Init)
 		{
 			C12 = (double *)malloc(mallocSize);
-			MPI_Irecv(C12, n, MPI_DOUBLE, rankGrupo3, 9, MPI_COMM_WORLD, &reqC12);
+			MPI_Irecv(C12, blockQtd, MPI_DOUBLE, rankGrupo3, 9, MPI_COMM_WORLD, &reqC12);
 		}
 		if (!c21Init)
 		{
 			C21 = (double *)malloc(mallocSize);
-			MPI_Irecv(C21, n, MPI_DOUBLE, rankGrupo2, 10, MPI_COMM_WORLD, &reqC21);
+			MPI_Irecv(C21, blockQtd, MPI_DOUBLE, rankGrupo2, 10, MPI_COMM_WORLD, &reqC21);
 		}
 		if (!c22Init)
 		{
 			C22 = (double *)malloc(mallocSize);
-			MPI_Irecv(C22, n, MPI_DOUBLE, rankGrupo6, 11, MPI_COMM_WORLD, &reqC22);
+			MPI_Irecv(C22, blockQtd, MPI_DOUBLE, rankGrupo6, 11, MPI_COMM_WORLD, &reqC22);
 		}
 
 		if (!c11Init)
