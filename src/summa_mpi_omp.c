@@ -129,6 +129,7 @@ int main(int argc, char *argv[])
 			total_time+=times_result[i];
 			
 		}
+		printLogMPI(log_path, ALGORITMO, n, total_time, max_time, rank, world_size);
 		if (output != 0)
 		{
 			printMatrix("output/C_summa_mpi_omp.txt", result, n);
