@@ -11,20 +11,19 @@
 #define ALGORITMO "strassen_mpi_omp"
 #define MAIN_RANK 1 // O processo que irá juntar os quadrantes de C e imprimir o resutlado
 
-typedef unsigned long int ulint;
-
-double *strassen_1(ulint n);
-double *strassen_2(double *A, double *B, ulint n);
-double *strassen_3(double *A, double *B, ulint n);
+double *strassen_step1(ulint n);
+double *strassen_step2(double *A, double *B, ulint n);
+double *strassen_step3(double *A, double *B, ulint n);
 double *sum(double *A, double *B, ulint n);
 double *sum3(double *A, double *B, double *C, ulint n);
 double *sub(double *A, double *B, ulint n);
 double *split(double *M, double *M11, double *M12, double *M21, double *M22, ulint n);
 double *join(double *C11, double *C12, double *C21, double *C22, ulint n);
-int isMainRank();
-int getMainRank();
 
-int front = 0;
+int world_size;
+int rank;
+int mainRank;
+int isMainRank;
 
 int main(int argc, char *argv[])
 {
@@ -50,15 +49,11 @@ int main(int argc, char *argv[])
 	// Configurações do MPI
 	MPI_Init(&argc, &argv);
 
-	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-	char processor_name[MPI_MAX_PROCESSOR_NAME];
-	int name_len;
-	MPI_Get_processor_name(processor_name, &name_len);
+	isMainRank = (world_size > MAIN_RANK && rank == MAIN_RANK) || (world_size < MAIN_RANK && rank == world_size - 1);
+	mainRank = (world_size > MAIN_RANK) ? MAIN_RANK : (world_size - 1);
 
 	MPI_Status status;
 
@@ -73,7 +68,7 @@ int main(int argc, char *argv[])
 	//---------------------------------------------------------------------------------
 	start = MPI_Wtime();
 
-	double *C = strassen_1(n);
+	double *C = strassen_step1(n);
 
 	end = MPI_Wtime();
 	//---------------------------------------------------------------------------------
@@ -83,7 +78,7 @@ int main(int argc, char *argv[])
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	// SAÍDAS
-	if (isMainRank())
+	if (isMainRank)
 	{
 		if (output != 0)
 		{
@@ -98,13 +93,8 @@ int main(int argc, char *argv[])
 }
 
 // Executa a primeira etapa do código, utilizando os quadrantes da primeira divisão da matriz
-double *strassen_1(ulint n)
+double *strassen_step1(ulint n)
 {
-	int world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
 	ulint blockSize = n / (ulint)2;
 	ulint blockQtd = blockSize * blockSize;
 	ulint mallocSize = blockQtd * (ulint)sizeof(double);
@@ -141,8 +131,8 @@ double *strassen_1(ulint n)
 	int ownerTask6 = (world_size > 6) ? 6 : (world_size > 3) ? 3 : (world_size > 1) ? 1 : 0;
 	int ownerTask7 = (world_size > 7) ? 7 : (world_size > 2) ? 2 : (world_size > 1) ? 1 : 0;
 
-	MPI_Request reqM1, reqM2, reqM3, reqM4, reqM5, reqM6, reqM7, reqC11, reqC12, reqC21, reqC22;
-	MPI_Status statusM1, statusM2, statusM3, statusM4, statusM5, statusM6, statusM7, statusC11, statusC12, statusC21, statusC22;
+	MPI_Request reqM1, reqM2, reqM3, reqM4, reqM5, reqC11, reqC12, reqC21, reqC22;
+	MPI_Status statusM1, statusM2, statusM3, statusM4, statusM5, statusC11, statusC12, statusC21, statusC22;
 
 	// **************** Task 1 ****************
 	if (mustExecTask1)
@@ -150,12 +140,12 @@ double *strassen_1(ulint n)
 		if (rank == 8)
 		{
 			double *_A, *_B;
-			strassen_2(_A, _B, blockSize);
+			strassen_step2(_A, _B, blockSize);
 		}
 		else
 		{
 			// M1 = (A11 + A22) * (B11 + B22)
-			M1 = strassen_2(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
+			M1 = strassen_step2(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
 			MPI_Isend(M1, blockQtd, MPI_DOUBLE, ownerTask6, 1, MPI_COMM_WORLD, &reqM1);
 			MPI_Isend(M1, blockQtd, MPI_DOUBLE, ownerTask7, 1, MPI_COMM_WORLD, &reqM1);
 			free(M1);
@@ -168,12 +158,12 @@ double *strassen_1(ulint n)
 		if (rank == 11)
 		{
 			double *_A, *_B;
-			strassen_2(_A, _B, blockSize);
+			strassen_step2(_A, _B, blockSize);
 		}
 		else
 		{
 			// M4 = A22 * (B21 - B11)
-			M4 = strassen_2(A22, sub(B21, B11, blockSize), blockSize);
+			M4 = strassen_step2(A22, sub(B21, B11, blockSize), blockSize);
 			MPI_Isend(M4, blockQtd, MPI_DOUBLE, ownerTask2, 4, MPI_COMM_WORLD, &reqM4);
 			MPI_Isend(M4, blockQtd, MPI_DOUBLE, ownerTask7, 4, MPI_COMM_WORLD, &reqM4);
 			free(M4);
@@ -186,12 +176,12 @@ double *strassen_1(ulint n)
 		if (rank == 12)
 		{
 			double *_A, *_B;
-			strassen_2(_A, _B, blockSize);
+			strassen_step2(_A, _B, blockSize);
 		}
 		else
 		{
 			// M5 = (A11 + A12) * B22
-			M5 = strassen_2(sum(A11, A12, blockSize), B22, blockSize);
+			M5 = strassen_step2(sum(A11, A12, blockSize), B22, blockSize);
 			MPI_Isend(M5, blockQtd, MPI_DOUBLE, ownerTask3, 5, MPI_COMM_WORLD, &reqM5);
 			MPI_Isend(M5, blockQtd, MPI_DOUBLE, ownerTask7, 5, MPI_COMM_WORLD, &reqM5);
 			free(M5);
@@ -204,7 +194,7 @@ double *strassen_1(ulint n)
 		if (rank == 9)
 		{
 			double *_A, *_B;
-			strassen_2(_A, _B, blockSize);
+			strassen_step2(_A, _B, blockSize);
 		}
 		else
 		{
@@ -212,7 +202,7 @@ double *strassen_1(ulint n)
 			MPI_Irecv(M4, blockQtd, MPI_DOUBLE, ownerTask4, 4, MPI_COMM_WORLD, &reqM4);
 
 			// M2 = (A21 + A22) * B11
-			M2 = strassen_2(sum(A21, A22, blockSize), B11, blockSize);
+			M2 = strassen_step2(sum(A21, A22, blockSize), B11, blockSize);
 			MPI_Isend(M2, blockQtd, MPI_DOUBLE, ownerTask6, 2, MPI_COMM_WORLD, &reqM2);
 
 			MPI_Wait(&reqM4, &statusM4);
@@ -222,8 +212,8 @@ double *strassen_1(ulint n)
 			free(M2);
 			free(M4);
 			c21Init = 1;
-			if (!isMainRank())
-				MPI_Isend(C21, blockQtd, MPI_DOUBLE, getMainRank(), 10, MPI_COMM_WORLD, &reqC21);
+			if (!isMainRank)
+				MPI_Isend(C21, blockQtd, MPI_DOUBLE, mainRank, 10, MPI_COMM_WORLD, &reqC21);
 		}
 	}
 
@@ -233,7 +223,7 @@ double *strassen_1(ulint n)
 		if (rank == 10)
 		{
 			double *_A, *_B;
-			strassen_2(_A, _B, blockSize);
+			strassen_step2(_A, _B, blockSize);
 		}
 		else
 		{
@@ -241,7 +231,7 @@ double *strassen_1(ulint n)
 			MPI_Irecv(M5, blockQtd, MPI_DOUBLE, ownerTask5, 5, MPI_COMM_WORLD, &reqM5);
 
 			// M3 = A11 * (B12 - B22)
-			M3 = strassen_2(A11, sub(B12, B22, blockSize), blockSize);
+			M3 = strassen_step2(A11, sub(B12, B22, blockSize), blockSize);
 			MPI_Isend(M3, blockQtd, MPI_DOUBLE, ownerTask6, 3, MPI_COMM_WORLD, &reqM3);
 
 			MPI_Wait(&reqM5, &statusM5);
@@ -251,8 +241,8 @@ double *strassen_1(ulint n)
 			free(M3);
 			free(M5);
 			c12Init = 1;
-			if (!isMainRank())
-				MPI_Isend(C12, blockQtd, MPI_DOUBLE, getMainRank(), 9, MPI_COMM_WORLD, &reqC12);
+			if (!isMainRank)
+				MPI_Isend(C12, blockQtd, MPI_DOUBLE, mainRank, 9, MPI_COMM_WORLD, &reqC12);
 		}
 	}
 
@@ -262,7 +252,7 @@ double *strassen_1(ulint n)
 		if (rank == 13)
 		{
 			double *_A, *_B;
-			strassen_2(_A, _B, blockSize);
+			strassen_step2(_A, _B, blockSize);
 		}
 		else
 		{
@@ -276,7 +266,7 @@ double *strassen_1(ulint n)
 			MPI_Irecv(M3, blockQtd, MPI_DOUBLE, ownerTask3, 3, MPI_COMM_WORLD, &reqM3);
 
 			// M6 = (A21 - A11) * (B11 + B12)
-			M6 = strassen_2(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
+			M6 = strassen_step2(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
 
 			MPI_Wait(&reqM1, &statusM1);
 			MPI_Wait(&reqM2, &statusM2);
@@ -288,8 +278,8 @@ double *strassen_1(ulint n)
 			free(M3);
 			free(M6);
 			c22Init = 1;
-			if (!isMainRank())
-				MPI_Isend(C22, blockQtd, MPI_DOUBLE, getMainRank(), 11, MPI_COMM_WORLD, &reqC22);
+			if (!isMainRank)
+				MPI_Isend(C22, blockQtd, MPI_DOUBLE, mainRank, 11, MPI_COMM_WORLD, &reqC22);
 		}
 	}
 
@@ -299,7 +289,7 @@ double *strassen_1(ulint n)
 		if (rank == 14)
 		{
 			double *_A, *_B;
-			strassen_2(_A, _B, blockSize);
+			strassen_step2(_A, _B, blockSize);
 		}
 		else
 		{
@@ -313,7 +303,7 @@ double *strassen_1(ulint n)
 			MPI_Irecv(M5, blockQtd, MPI_DOUBLE, ownerTask5, 5, MPI_COMM_WORLD, &reqM5);
 
 			// M7 = (A12 - A22) * (B21 + B22)
-			M7 = strassen_2(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
+			M7 = strassen_step2(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
 
 			MPI_Wait(&reqM1, &statusM1);
 			MPI_Wait(&reqM4, &statusM4);
@@ -325,8 +315,8 @@ double *strassen_1(ulint n)
 			free(M4);
 			free(M7);
 			c11Init = 1;
-			if (!isMainRank())
-				MPI_Isend(C11, blockQtd, MPI_DOUBLE, getMainRank(), 8, MPI_COMM_WORLD, &reqC11);
+			if (!isMainRank)
+				MPI_Isend(C11, blockQtd, MPI_DOUBLE, mainRank, 8, MPI_COMM_WORLD, &reqC11);
 		}
 	}
 
@@ -342,7 +332,7 @@ double *strassen_1(ulint n)
 		free(B22);
 	}
 
-	if (!isMainRank())
+	if (!isMainRank)
 		return (double *)calloc(1, sizeof(double));
 	else
 	{
@@ -382,7 +372,7 @@ double *strassen_1(ulint n)
 }
 
 // Executa a segunda etapa do código, utilizado para calcular os primeiros Ms e Cs da etapa 1
-double *strassen_2(double *A, double *B, ulint n)
+double *strassen_step2(double *A, double *B, ulint n)
 {
 	if (n == 1)
 	{
@@ -390,11 +380,6 @@ double *strassen_2(double *A, double *B, ulint n)
 		C[0] = A[0] * B[0];
 		return C;
 	}
-
-	int world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	int mustExecTask1 = world_size <= 8 || rank <= 7;
 	int mustExecTask2 = world_size <= 8 || rank > 7 || (rank + 7) >= world_size;
@@ -441,29 +426,28 @@ double *strassen_2(double *A, double *B, ulint n)
 
 	double *M1, *M2, *M3, *M4, *M5, *M6, *M7;
 	double *C11, *C12, *C21, *C22;
-	int c11Init = 0, c12Init = 0, c21Init = 0, c22Init = 0;
 
 	// Se ele vai fazer as duas tarefas, não tem porque perder tempo com "comunicação"
 	if (mustExecTask1 && mustExecTask2)
 	{
 		// M1 = (A11 + A22) * (B11 + B22)
-		M1 = strassen_3(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
+		M1 = strassen_step3(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
 		// M2 = (A21 + A22) * B11
-		M2 = strassen_3(sum(A21, A22, blockSize), B11, blockSize);
+		M2 = strassen_step3(sum(A21, A22, blockSize), B11, blockSize);
 		// M3 = A11 * (B12 - B22)
-		M3 = strassen_3(A11, sub(B12, B22, blockSize), blockSize);
+		M3 = strassen_step3(A11, sub(B12, B22, blockSize), blockSize);
 		// M4 = A22 * (B21 - B11)
-		M4 = strassen_3(A22, sub(B21, B11, blockSize), blockSize);
+		M4 = strassen_step3(A22, sub(B21, B11, blockSize), blockSize);
 		// M5 = (A11 + A12) * B22
-		M5 = strassen_3(sum(A11, A12, blockSize), B22, blockSize);
+		M5 = strassen_step3(sum(A11, A12, blockSize), B22, blockSize);
 		// M6 = (A21 - A11) * (B11 + B12)
-		M6 = strassen_3(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
+		M6 = strassen_step3(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
 		free(A11);
 		free(A21);
 		free(B11);
 		free(B12);
 		// M7 = (A12 - A22) * (B21 + B22)
-		M7 = strassen_3(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
+		M7 = strassen_step3(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
 		free(A12);
 		free(A22);
 		free(B21);
@@ -504,17 +488,17 @@ double *strassen_2(double *A, double *B, ulint n)
 		MPI_Irecv(M5, blockQtd, MPI_DOUBLE, ownerTask2, 5, MPI_COMM_WORLD, &reqM5);
 
 		// M1 = (A11 + A22) * (B11 + B22)
-		M1 = strassen_3(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
+		M1 = strassen_step3(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
 		MPI_Isend(M1, blockQtd, MPI_DOUBLE, ownerTask2, 1, MPI_COMM_WORLD, &reqM1);
 
 		// M2 = (A21 + A22) * B11
-		M2 = strassen_3(sum(A21, A22, blockSize), B11, blockSize);
+		M2 = strassen_step3(sum(A21, A22, blockSize), B11, blockSize);
 		free(A22);
 		// M3 = A11 * (B12 - B22)
-		M3 = strassen_3(A11, sub(B12, B22, blockSize), blockSize);
+		M3 = strassen_step3(A11, sub(B12, B22, blockSize), blockSize);
 		free(B22);
 		// M6 = (A21 - A11) * (B11 + B12)
-		M6 = strassen_3(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
+		M6 = strassen_step3(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
 		free(A21);
 		free(A11);
 		free(B11);
@@ -555,18 +539,18 @@ double *strassen_2(double *A, double *B, ulint n)
 		MPI_Irecv(M1, blockQtd, MPI_DOUBLE, ownerTask1, 1, MPI_COMM_WORLD, &reqM1);
 
 		// M4 = A22 * (B21 - B11)
-		M4 = strassen_3(A22, sub(B21, B11, blockSize), blockSize);
+		M4 = strassen_step3(A22, sub(B21, B11, blockSize), blockSize);
 		MPI_Isend(M4, blockQtd, MPI_DOUBLE, ownerTask1, 4, MPI_COMM_WORLD, &reqM4);
 		free(B11);
 
 		// M5 = (A11 + A12) * B22
-		M5 = strassen_3(sum(A11, A12, blockSize), B22, blockSize);
+		M5 = strassen_step3(sum(A11, A12, blockSize), B22, blockSize);
 		MPI_Isend(M5, blockQtd, MPI_DOUBLE, ownerTask1, 5, MPI_COMM_WORLD, &reqM5);
 		free(A11);
 
 		MPI_Wait(&reqM1, &statusM1);
 		// M7 = (A12 - A22) * (B21 + B22)
-		M7 = strassen_3(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
+		M7 = strassen_step3(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
 		free(A12);
 		free(A22);
 		free(B21);
@@ -585,7 +569,7 @@ double *strassen_2(double *A, double *B, ulint n)
 	}
 }
 
-double *strassen_3(double *A, double *B, ulint n)
+double *strassen_step3(double *A, double *B, ulint n)
 {
 	if (n == 1)
 	{
@@ -609,23 +593,23 @@ double *strassen_3(double *A, double *B, ulint n)
 	split(B, B11, B12, B21, B22, n);
 
 	// M1 = (A11 + A22) * (B11 + B22)
-	double *M1 = strassen_3(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
+	double *M1 = strassen_step3(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
 	// M2 = (A21 + A22) * B11
-	double *M2 = strassen_3(sum(A21, A22, blockSize), B11, blockSize);
+	double *M2 = strassen_step3(sum(A21, A22, blockSize), B11, blockSize);
 	// M3 = A11 * (B12 - B22)
-	double *M3 = strassen_3(A11, sub(B12, B22, blockSize), blockSize);
+	double *M3 = strassen_step3(A11, sub(B12, B22, blockSize), blockSize);
 	// M4 = A22 * (B21 - B11)
-	double *M4 = strassen_3(A22, sub(B21, B11, blockSize), blockSize);
+	double *M4 = strassen_step3(A22, sub(B21, B11, blockSize), blockSize);
 	// M5 = (A11 + A12) * B22
-	double *M5 = strassen_3(sum(A11, A12, blockSize), B22, blockSize);
+	double *M5 = strassen_step3(sum(A11, A12, blockSize), B22, blockSize);
 	// M6 = (A21 - A11) * (B11 + B12)
-	double *M6 = strassen_3(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
+	double *M6 = strassen_step3(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
 	free(A11);
 	free(A21);
 	free(B11);
 	free(B12);
 	// M7 = (A12 - A22) * (B21 + B22)
-	double *M7 = strassen_3(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
+	double *M7 = strassen_step3(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
 	free(A12);
 	free(A22);
 	free(B21);
@@ -648,26 +632,6 @@ double *strassen_3(double *A, double *B, ulint n)
 	free(M6);
 
 	return join(C11, C12, C21, C22, n);
-}
-
-int isMainRank()
-{
-	int world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-	return (world_size > MAIN_RANK && rank == MAIN_RANK) || (world_size < MAIN_RANK && rank == world_size - 1);
-}
-
-int getMainRank()
-{
-	int world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-	return (world_size > MAIN_RANK) ? MAIN_RANK : (world_size - 1);
 }
 
 double *sum(double *A, double *B, ulint n)
