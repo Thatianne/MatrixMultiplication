@@ -21,10 +21,11 @@ double *sum3(double *A, double *B, double *C, ulint n);
 double *sub(double *A, double *B, ulint n);
 double *split(double *M, double *M11, double *M12, double *M21, double *M22, ulint n);
 double *join(double *C11, double *C12, double *C21, double *C22, ulint n);
-int isMainRank();
-int getMainRank();
 
-int front = 0;
+int world_size;
+int rank;
+int mainRank;
+int isMainRank;
 
 int main(int argc, char *argv[])
 {
@@ -46,15 +47,11 @@ int main(int argc, char *argv[])
 	// Configurações do MPI
 	MPI_Init(&argc, &argv);
 
-	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-	char processor_name[MPI_MAX_PROCESSOR_NAME];
-	int name_len;
-	MPI_Get_processor_name(processor_name, &name_len);
+	isMainRank = (world_size > MAIN_RANK && rank == MAIN_RANK) || (world_size < MAIN_RANK && rank == world_size - 1);
+	mainRank = (world_size > MAIN_RANK) ? MAIN_RANK : (world_size - 1);
 
 	MPI_Status status;
 
@@ -79,7 +76,7 @@ int main(int argc, char *argv[])
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	// SAÍDAS
-	if (isMainRank())
+	if (isMainRank)
 	{
 		if (output != 0)
 		{
@@ -96,11 +93,6 @@ int main(int argc, char *argv[])
 // Executa a primeira etapa do código, utilizando os quadrantes da primeira divisão da matriz
 double *strassen_1(ulint n)
 {
-	int world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
 	ulint blockSize = n / (ulint)2;
 	ulint blockQtd = blockSize * blockSize;
 	ulint mallocSize = blockQtd * (ulint)sizeof(double);
@@ -218,8 +210,8 @@ double *strassen_1(ulint n)
 			free(M2);
 			free(M4);
 			c21Init = 1;
-			if (!isMainRank())
-				MPI_Isend(C21, blockQtd, MPI_DOUBLE, getMainRank(), 10, MPI_COMM_WORLD, &reqC21);
+			if (!isMainRank)
+				MPI_Isend(C21, blockQtd, MPI_DOUBLE, mainRank, 10, MPI_COMM_WORLD, &reqC21);
 		}
 	}
 
@@ -247,8 +239,8 @@ double *strassen_1(ulint n)
 			free(M3);
 			free(M5);
 			c12Init = 1;
-			if (!isMainRank())
-				MPI_Isend(C12, blockQtd, MPI_DOUBLE, getMainRank(), 9, MPI_COMM_WORLD, &reqC12);
+			if (!isMainRank)
+				MPI_Isend(C12, blockQtd, MPI_DOUBLE, mainRank, 9, MPI_COMM_WORLD, &reqC12);
 		}
 	}
 
@@ -284,8 +276,8 @@ double *strassen_1(ulint n)
 			free(M3);
 			free(M6);
 			c22Init = 1;
-			if (!isMainRank())
-				MPI_Isend(C22, blockQtd, MPI_DOUBLE, getMainRank(), 11, MPI_COMM_WORLD, &reqC22);
+			if (!isMainRank)
+				MPI_Isend(C22, blockQtd, MPI_DOUBLE, mainRank, 11, MPI_COMM_WORLD, &reqC22);
 		}
 	}
 
@@ -321,8 +313,8 @@ double *strassen_1(ulint n)
 			free(M4);
 			free(M7);
 			c11Init = 1;
-			if (!isMainRank())
-				MPI_Isend(C11, blockQtd, MPI_DOUBLE, getMainRank(), 8, MPI_COMM_WORLD, &reqC11);
+			if (!isMainRank)
+				MPI_Isend(C11, blockQtd, MPI_DOUBLE, mainRank, 8, MPI_COMM_WORLD, &reqC11);
 		}
 	}
 
@@ -338,7 +330,7 @@ double *strassen_1(ulint n)
 		free(B22);
 	}
 
-	if (!isMainRank())
+	if (!isMainRank)
 		return (double *)calloc(1, sizeof(double));
 	else
 	{
@@ -386,11 +378,6 @@ double *strassen_2(double *A, double *B, ulint n)
 		C[0] = A[0] * B[0];
 		return C;
 	}
-
-	int world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	int mustExecTask1 = world_size <= 8 || rank <= 7;
 	int mustExecTask2 = world_size <= 8 || rank > 7 || (rank + 7) >= world_size;
@@ -644,26 +631,6 @@ double *strassen_3(double *A, double *B, ulint n)
 	free(M6);
 
 	return join(C11, C12, C21, C22, n);
-}
-
-int isMainRank()
-{
-	int world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-	return (world_size > MAIN_RANK && rank == MAIN_RANK) || (world_size < MAIN_RANK && rank == world_size - 1);
-}
-
-int getMainRank()
-{
-	int world_size;
-	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
-	return (world_size > MAIN_RANK) ? MAIN_RANK : (world_size - 1);
 }
 
 double *sum(double *A, double *B, ulint n)
