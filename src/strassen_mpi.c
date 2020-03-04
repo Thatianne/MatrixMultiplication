@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-	isMainRank = (world_size > MAIN_RANK && rank == MAIN_RANK) || (world_size < MAIN_RANK && rank == world_size - 1);
+	isMainRank = (world_size > MAIN_RANK && rank == MAIN_RANK) || (world_size <= MAIN_RANK && rank == world_size - 1);
 	mainRank = (world_size > MAIN_RANK) ? MAIN_RANK : (world_size - 1);
 
 	MPI_Status status;
