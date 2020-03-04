@@ -105,35 +105,37 @@ double *strassen_1(ulint n)
 	ulint blockQtd = blockSize * blockSize;
 	ulint mallocSize = blockQtd * (ulint)sizeof(double);
 
-	double *A11 = read11(rank, 'A', n);
-	double *A12 = read12(rank, 'A', n);
-	double *A21 = read21(rank, 'A', n);
-	double *A22 = read22(rank, 'A', n);
-	double *B11 = read11(rank, 'B', n);
-	double *B12 = read12(rank, 'B', n);
-	double *B21 = read21(rank, 'B', n);
-	double *B22 = read22(rank, 'B', n);
+	double *A11, *A12, *A21, *A22, *B11, *B12, *B21, *B22;
+	if (rank <= 7)
+	{
+		A11 = read11(rank, 'A', n);
+		A12 = read12(rank, 'A', n);
+		A21 = read21(rank, 'A', n);
+		A22 = read22(rank, 'A', n);
+		B11 = read11(rank, 'B', n);
+		B12 = read12(rank, 'B', n);
+		B21 = read21(rank, 'B', n);
+		B22 = read22(rank, 'B', n);
+	}
 
 	double *M1, *M2, *M3, *M4, *M5, *M6, *M7;
 	double *C11, *C12, *C21, *C22;
 	int c11Init = 0, c12Init = 0, c21Init = 0, c22Init = 0;
 
-	int mustExecTask1 = world_size == 1 || rank == 1;
-	int mustExecTask2 = world_size == 1 || rank == 2 || (world_size == 2 && rank == 1);
-	int mustExecTask3 = world_size == 1 || rank == 3 || (world_size <= 3 && rank == 1);
-	int mustExecTask4 = world_size == 1 || rank == 4 || (world_size <= 2 && rank == 1) || (world_size > 2 && world_size <= 4 && rank == 2);
-	int mustExecTask5 = world_size == 1 || rank == 5 || (world_size <= 5 && rank == 1);
-	int mustExecTask6 = world_size == 1 || rank == 6 || (world_size <= 3 && rank == 1) || (world_size > 3 && world_size <= 6 && rank == 3);
-	int mustExecTask7 = world_size == 1 || rank == 7 || (world_size <= 2 && rank == 1) || (world_size > 2 && world_size <= 7 && rank == 2);
+	int mustExecTask1 = world_size == 1 || rank == 1 || rank == 8;
+	int mustExecTask2 = world_size == 1 || rank == 2 || rank == 9 || (world_size == 2 && rank == 1);
+	int mustExecTask3 = world_size == 1 || rank == 3 || rank == 10 || (world_size <= 3 && rank == 1);
+	int mustExecTask4 = world_size == 1 || rank == 4 || rank == 11 || (world_size <= 2 && rank == 1) || (world_size > 2 && world_size <= 4 && rank == 2);
+	int mustExecTask5 = world_size == 1 || rank == 5 || rank == 12 || (world_size <= 5 && rank == 1);
+	int mustExecTask6 = world_size == 1 || rank == 6 || rank == 13 || (world_size <= 3 && rank == 1) || (world_size > 3 && world_size <= 6 && rank == 3);
+	int mustExecTask7 = world_size == 1 || rank == 7 || rank == 14 || (world_size <= 2 && rank == 1) || (world_size > 2 && world_size <= 7 && rank == 2);
 	int ownerTask1 = (world_size > 1) ? 1 : 0;
 	int ownerTask2 = (world_size > 2) ? 2 : (world_size > 1) ? 1 : 0;
 	int ownerTask3 = (world_size > 3) ? 3 : (world_size > 1) ? 1 : 0;
-	int rankGrupo4 = (world_size > 4) ? 4 : (world_size > 2) ? 2 : (world_size > 1) ? 1 : 0;
-	int rankGrupo5 = (world_size > 5) ? 5 : (world_size > 1) ? 1 : 0;
-	int rankGrupo6 = (world_size > 6) ? 6 : (world_size > 3) ? 3 : (world_size > 1) ? 1 : 0;
+	int ownerTask4 = (world_size > 4) ? 4 : (world_size > 2) ? 2 : (world_size > 1) ? 1 : 0;
+	int ownerTask5 = (world_size > 5) ? 5 : (world_size > 1) ? 1 : 0;
+	int ownerTask6 = (world_size > 6) ? 6 : (world_size > 3) ? 3 : (world_size > 1) ? 1 : 0;
 	int ownerTask7 = (world_size > 7) ? 7 : (world_size > 2) ? 2 : (world_size > 1) ? 1 : 0;
-
-	printf("-----> LOG: %d: %d %d %d %d %d %d %d\n", rank, mustExecTask1, mustExecTask2, mustExecTask3, mustExecTask4, mustExecTask5, mustExecTask6, mustExecTask7);
 
 	MPI_Request reqM1, reqM2, reqM3, reqM4, reqM5, reqM6, reqM7, reqC11, reqC12, reqC21, reqC22;
 	MPI_Status statusM1, statusM2, statusM3, statusM4, statusM5, statusM6, statusM7, statusC11, statusC12, statusC21, statusC22;
@@ -141,141 +143,200 @@ double *strassen_1(ulint n)
 	// **************** Task 1 ****************
 	if (mustExecTask1)
 	{
-		// M1 = (A11 + A22) * (B11 + B22)
-		M1 = strassen_2(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
-		MPI_Isend(M1, blockQtd, MPI_DOUBLE, rankGrupo6, 1, MPI_COMM_WORLD, &reqM1);
-		MPI_Isend(M1, blockQtd, MPI_DOUBLE, ownerTask7, 1, MPI_COMM_WORLD, &reqM1);
-		free(M1);
+		if (rank == 8)
+		{
+			double *_A, *_B;
+			strassen_2(_A, _B, blockSize);
+		}
+		else
+		{
+			// M1 = (A11 + A22) * (B11 + B22)
+			M1 = strassen_2(sum(A11, A22, blockSize), sum(B11, B22, blockSize), blockSize);
+			MPI_Isend(M1, blockQtd, MPI_DOUBLE, ownerTask6, 1, MPI_COMM_WORLD, &reqM1);
+			MPI_Isend(M1, blockQtd, MPI_DOUBLE, ownerTask7, 1, MPI_COMM_WORLD, &reqM1);
+			free(M1);
+		}
 	}
 
 	// **************** Task 4 ****************
 	if (mustExecTask4)
 	{
-		// M4 = A22 * (B21 - B11)
-		M4 = strassen_2(A22, sub(B21, B11, blockSize), blockSize);
-		MPI_Isend(M4, blockQtd, MPI_DOUBLE, ownerTask2, 4, MPI_COMM_WORLD, &reqM4);
-		MPI_Isend(M4, blockQtd, MPI_DOUBLE, ownerTask7, 4, MPI_COMM_WORLD, &reqM4);
-		free(M4);
+		if (rank == 11)
+		{
+			double *_A, *_B;
+			strassen_2(_A, _B, blockSize);
+		}
+		else
+		{
+			// M4 = A22 * (B21 - B11)
+			M4 = strassen_2(A22, sub(B21, B11, blockSize), blockSize);
+			MPI_Isend(M4, blockQtd, MPI_DOUBLE, ownerTask2, 4, MPI_COMM_WORLD, &reqM4);
+			MPI_Isend(M4, blockQtd, MPI_DOUBLE, ownerTask7, 4, MPI_COMM_WORLD, &reqM4);
+			free(M4);
+		}
 	}
 
 	// **************** Task 5 ****************
 	if (mustExecTask5)
 	{
-		// M5 = (A11 + A12) * B22
-		M5 = strassen_2(sum(A11, A12, blockSize), B22, blockSize);
-		MPI_Isend(M5, blockQtd, MPI_DOUBLE, ownerTask3, 5, MPI_COMM_WORLD, &reqM5);
-		MPI_Isend(M5, blockQtd, MPI_DOUBLE, ownerTask7, 5, MPI_COMM_WORLD, &reqM5);
-		free(M5);
+		if (rank == 12)
+		{
+			double *_A, *_B;
+			strassen_2(_A, _B, blockSize);
+		}
+		else
+		{
+			// M5 = (A11 + A12) * B22
+			M5 = strassen_2(sum(A11, A12, blockSize), B22, blockSize);
+			MPI_Isend(M5, blockQtd, MPI_DOUBLE, ownerTask3, 5, MPI_COMM_WORLD, &reqM5);
+			MPI_Isend(M5, blockQtd, MPI_DOUBLE, ownerTask7, 5, MPI_COMM_WORLD, &reqM5);
+			free(M5);
+		}
 	}
 
 	// **************** Task 2 ****************
 	if (mustExecTask2)
 	{
-		M4 = (double *)malloc(mallocSize);
-		MPI_Irecv(M4, blockQtd, MPI_DOUBLE, rankGrupo4, 4, MPI_COMM_WORLD, &reqM4);
+		if (rank == 9)
+		{
+			double *_A, *_B;
+			strassen_2(_A, _B, blockSize);
+		}
+		else
+		{
+			M4 = (double *)malloc(mallocSize);
+			MPI_Irecv(M4, blockQtd, MPI_DOUBLE, ownerTask4, 4, MPI_COMM_WORLD, &reqM4);
 
-		// M2 = (A21 + A22) * B11
-		M2 = strassen_2(sum(A21, A22, blockSize), B11, blockSize);
-		MPI_Isend(M2, blockQtd, MPI_DOUBLE, rankGrupo6, 2, MPI_COMM_WORLD, &reqM2);
+			// M2 = (A21 + A22) * B11
+			M2 = strassen_2(sum(A21, A22, blockSize), B11, blockSize);
+			MPI_Isend(M2, blockQtd, MPI_DOUBLE, ownerTask6, 2, MPI_COMM_WORLD, &reqM2);
 
-		MPI_Wait(&reqM4, &statusM4);
+			MPI_Wait(&reqM4, &statusM4);
 
-		// C21 = M2 + M4
-		C21 = sum(M2, M4, blockSize);
-		free(M2);
-		free(M4);
-		c21Init = 1;
-		if (!isMainRank())
-			MPI_Isend(C21, blockQtd, MPI_DOUBLE, getMainRank(), 10, MPI_COMM_WORLD, &reqC21);
+			// C21 = M2 + M4
+			C21 = sum(M2, M4, blockSize);
+			free(M2);
+			free(M4);
+			c21Init = 1;
+			if (!isMainRank())
+				MPI_Isend(C21, blockQtd, MPI_DOUBLE, getMainRank(), 10, MPI_COMM_WORLD, &reqC21);
+		}
 	}
 
 	// **************** Task 3 ****************
 	if (mustExecTask3)
 	{
-		M5 = (double *)malloc(mallocSize);
-		MPI_Irecv(M5, blockQtd, MPI_DOUBLE, rankGrupo5, 5, MPI_COMM_WORLD, &reqM5);
+		if (rank == 10)
+		{
+			double *_A, *_B;
+			strassen_2(_A, _B, blockSize);
+		}
+		else
+		{
+			M5 = (double *)malloc(mallocSize);
+			MPI_Irecv(M5, blockQtd, MPI_DOUBLE, ownerTask5, 5, MPI_COMM_WORLD, &reqM5);
 
-		// M3 = A11 * (B12 - B22)
-		M3 = strassen_2(A11, sub(B12, B22, blockSize), blockSize);
-		MPI_Isend(M3, blockQtd, MPI_DOUBLE, rankGrupo6, 3, MPI_COMM_WORLD, &reqM3);
+			// M3 = A11 * (B12 - B22)
+			M3 = strassen_2(A11, sub(B12, B22, blockSize), blockSize);
+			MPI_Isend(M3, blockQtd, MPI_DOUBLE, ownerTask6, 3, MPI_COMM_WORLD, &reqM3);
 
-		MPI_Wait(&reqM5, &statusM5);
+			MPI_Wait(&reqM5, &statusM5);
 
-		// C12 = M3 + M5
-		C12 = sum(M3, M5, blockSize);
-		free(M3);
-		free(M5);
-		c12Init = 1;
-		if (!isMainRank())
-			MPI_Isend(C12, blockQtd, MPI_DOUBLE, getMainRank(), 9, MPI_COMM_WORLD, &reqC12);
+			// C12 = M3 + M5
+			C12 = sum(M3, M5, blockSize);
+			free(M3);
+			free(M5);
+			c12Init = 1;
+			if (!isMainRank())
+				MPI_Isend(C12, blockQtd, MPI_DOUBLE, getMainRank(), 9, MPI_COMM_WORLD, &reqC12);
+		}
 	}
 
 	// **************** Task 6 ****************
 	if (mustExecTask6)
 	{
-		M1 = (double *)malloc(mallocSize);
-		MPI_Irecv(M1, blockQtd, MPI_DOUBLE, ownerTask1, 1, MPI_COMM_WORLD, &reqM1);
+		if (rank == 13)
+		{
+			double *_A, *_B;
+			strassen_2(_A, _B, blockSize);
+		}
+		else
+		{
+			M1 = (double *)malloc(mallocSize);
+			MPI_Irecv(M1, blockQtd, MPI_DOUBLE, ownerTask1, 1, MPI_COMM_WORLD, &reqM1);
 
-		M2 = (double *)malloc(mallocSize);
-		MPI_Irecv(M2, blockQtd, MPI_DOUBLE, ownerTask2, 2, MPI_COMM_WORLD, &reqM2);
+			M2 = (double *)malloc(mallocSize);
+			MPI_Irecv(M2, blockQtd, MPI_DOUBLE, ownerTask2, 2, MPI_COMM_WORLD, &reqM2);
 
-		M3 = (double *)malloc(mallocSize);
-		MPI_Irecv(M3, blockQtd, MPI_DOUBLE, ownerTask3, 3, MPI_COMM_WORLD, &reqM3);
+			M3 = (double *)malloc(mallocSize);
+			MPI_Irecv(M3, blockQtd, MPI_DOUBLE, ownerTask3, 3, MPI_COMM_WORLD, &reqM3);
 
-		// M6 = (A21 - A11) * (B11 + B12)
-		M6 = strassen_2(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
+			// M6 = (A21 - A11) * (B11 + B12)
+			M6 = strassen_2(sub(A21, A11, blockSize), sum(B11, B12, blockSize), blockSize);
 
-		MPI_Wait(&reqM1, &statusM1);
-		MPI_Wait(&reqM2, &statusM2);
-		MPI_Wait(&reqM3, &statusM3);
+			MPI_Wait(&reqM1, &statusM1);
+			MPI_Wait(&reqM2, &statusM2);
+			MPI_Wait(&reqM3, &statusM3);
 
-		// C22 = M1 - M2 + M3 + M6
-		C22 = sub(sum3(M1, M3, M6, blockSize), M2, blockSize);
-		free(M1);
-		free(M3);
-		free(M6);
-		c22Init = 1;
-		if (!isMainRank())
-			MPI_Isend(C22, blockQtd, MPI_DOUBLE, getMainRank(), 11, MPI_COMM_WORLD, &reqC22);
+			// C22 = M1 - M2 + M3 + M6
+			C22 = sub(sum3(M1, M3, M6, blockSize), M2, blockSize);
+			free(M1);
+			free(M3);
+			free(M6);
+			c22Init = 1;
+			if (!isMainRank())
+				MPI_Isend(C22, blockQtd, MPI_DOUBLE, getMainRank(), 11, MPI_COMM_WORLD, &reqC22);
+		}
 	}
 
 	// **************** Task 7 ****************
 	if (mustExecTask7)
 	{
-		M1 = (double *)malloc(mallocSize);
-		MPI_Irecv(M1, blockQtd, MPI_DOUBLE, ownerTask1, 1, MPI_COMM_WORLD, &reqM1);
+		if (rank == 14)
+		{
+			double *_A, *_B;
+			strassen_2(_A, _B, blockSize);
+		}
+		else
+		{
+			M1 = (double *)malloc(mallocSize);
+			MPI_Irecv(M1, blockQtd, MPI_DOUBLE, ownerTask1, 1, MPI_COMM_WORLD, &reqM1);
 
-		M4 = (double *)malloc(mallocSize);
-		MPI_Irecv(M4, blockQtd, MPI_DOUBLE, rankGrupo4, 4, MPI_COMM_WORLD, &reqM4);
+			M4 = (double *)malloc(mallocSize);
+			MPI_Irecv(M4, blockQtd, MPI_DOUBLE, ownerTask4, 4, MPI_COMM_WORLD, &reqM4);
 
-		M5 = (double *)malloc(mallocSize);
-		MPI_Irecv(M5, blockQtd, MPI_DOUBLE, rankGrupo5, 5, MPI_COMM_WORLD, &reqM5);
+			M5 = (double *)malloc(mallocSize);
+			MPI_Irecv(M5, blockQtd, MPI_DOUBLE, ownerTask5, 5, MPI_COMM_WORLD, &reqM5);
 
-		// M7 = (A12 - A22) * (B21 + B22)
-		M7 = strassen_2(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
+			// M7 = (A12 - A22) * (B21 + B22)
+			M7 = strassen_2(sub(A12, A22, blockSize), sum(B21, B22, blockSize), blockSize);
 
-		MPI_Wait(&reqM1, &statusM1);
-		MPI_Wait(&reqM4, &statusM4);
-		MPI_Wait(&reqM5, &statusM5);
+			MPI_Wait(&reqM1, &statusM1);
+			MPI_Wait(&reqM4, &statusM4);
+			MPI_Wait(&reqM5, &statusM5);
 
-		// C11 = M1 + M4 - M5 + M7
-		C11 = sub(sum3(M1, M4, M7, blockSize), M5, blockSize);
-		free(M1);
-		free(M4);
-		free(M7);
-		c11Init = 1;
-		if (!isMainRank())
-			MPI_Isend(C11, blockQtd, MPI_DOUBLE, getMainRank(), 8, MPI_COMM_WORLD, &reqC11);
+			// C11 = M1 + M4 - M5 + M7
+			C11 = sub(sum3(M1, M4, M7, blockSize), M5, blockSize);
+			free(M1);
+			free(M4);
+			free(M7);
+			c11Init = 1;
+			if (!isMainRank())
+				MPI_Isend(C11, blockQtd, MPI_DOUBLE, getMainRank(), 8, MPI_COMM_WORLD, &reqC11);
+		}
 	}
 
-	free(A11);
-	free(A12);
-	free(A21);
-	free(A22);
-	free(B11);
-	free(B12);
-	free(B21);
-	free(B22);
+	if (rank <= 7)
+	{
+		free(A11);
+		free(A12);
+		free(A21);
+		free(A22);
+		free(B11);
+		free(B12);
+		free(B21);
+		free(B22);
+	}
 
 	if (!isMainRank())
 		return (double *)calloc(1, sizeof(double));
@@ -300,7 +361,7 @@ double *strassen_1(ulint n)
 		if (!c22Init)
 		{
 			C22 = (double *)malloc(mallocSize);
-			MPI_Irecv(C22, blockQtd, MPI_DOUBLE, rankGrupo6, 11, MPI_COMM_WORLD, &reqC22);
+			MPI_Irecv(C22, blockQtd, MPI_DOUBLE, ownerTask6, 11, MPI_COMM_WORLD, &reqC22);
 		}
 
 		if (!c11Init)
@@ -331,31 +392,52 @@ double *strassen_2(double *A, double *B, ulint n)
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+	int mustExecTask1 = world_size <= 8 || rank <= 7;
+	int mustExecTask2 = world_size <= 8 || rank > 7 || (rank + 7) >= world_size;
+	int ownerTask1 = (rank > 7) ? rank - 7 : rank;
+	int ownerTask2 = (rank > 7) ? rank : ((rank + 7) < world_size) ? rank + 7 : rank;
+
+	ulint size = n * n;
 	ulint blockSize = n / (ulint)2;
 	ulint blockQtd = blockSize * blockSize;
 	ulint mallocSize = blockQtd * (ulint)sizeof(double);
+
+	MPI_Request reqA, reqB;
+	MPI_Status statusA, statusB;
+
+	if (world_size > rank + 7 && rank <= 7)
+	{
+		MPI_Isend(A, size, MPI_DOUBLE, rank + 7, 9, MPI_COMM_WORLD, &reqA);
+		MPI_Isend(B, size, MPI_DOUBLE, rank + 7, 10, MPI_COMM_WORLD, &reqB);
+	}
+	if (rank > 7)
+	{
+		A = (double *)malloc(size * (ulint)sizeof(double));
+		MPI_Irecv(A, size, MPI_DOUBLE, rank - 7, 9, MPI_COMM_WORLD, &reqA);
+		B = (double *)malloc(size * (ulint)sizeof(double));
+		MPI_Irecv(B, size, MPI_DOUBLE, rank - 7, 10, MPI_COMM_WORLD, &reqB);
+	}
 
 	double *A11 = (double *)malloc(mallocSize);
 	double *A12 = (double *)malloc(mallocSize);
 	double *A21 = (double *)malloc(mallocSize);
 	double *A22 = (double *)malloc(mallocSize);
+	if (rank > 7)
+		MPI_Wait(&reqA, &statusA);
 	split(A, A11, A12, A21, A22, n);
 	free(A);
 	double *B11 = (double *)malloc(mallocSize);
 	double *B12 = (double *)malloc(mallocSize);
 	double *B21 = (double *)malloc(mallocSize);
 	double *B22 = (double *)malloc(mallocSize);
+	if (rank > 7)
+		MPI_Wait(&reqB, &statusB);
 	split(B, B11, B12, B21, B22, n);
 	free(B);
 
 	double *M1, *M2, *M3, *M4, *M5, *M6, *M7;
 	double *C11, *C12, *C21, *C22;
 	int c11Init = 0, c12Init = 0, c21Init = 0, c22Init = 0;
-
-	int mustExecTask1 = world_size <= 8 || rank <= 7;
-	int mustExecTask2 = world_size <= 8 || rank > 8;
-	int ownerTask1 = (rank > 7) ? rank - 7 : rank;
-	int ownerTask2 = (rank > 7) ? rank : ((rank + 7) < world_size) ? rank + 7 : rank;
 
 	// Se ele vai fazer as duas tarefas, não tem porque perder tempo com "comunicação"
 	if (mustExecTask1 && mustExecTask2)
@@ -455,6 +537,7 @@ double *strassen_2(double *A, double *B, ulint n)
 		free(M5);
 
 		MPI_Wait(&reqC11, &statusC11);
+
 		return join(C11, C12, C21, C22, n);
 	}
 
