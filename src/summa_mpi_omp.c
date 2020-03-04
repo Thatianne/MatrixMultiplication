@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
 	double a;
 	double *B;
 	double *C = (double *)calloc(matrixSize, sizeof(double));
+	double *time_read = (double *)malloc(rowSize);
 
 	// Configurações do OpenMP
 	omp_set_num_threads(omp_get_max_threads());
@@ -62,7 +63,7 @@ int main(int argc, char *argv[])
 	start = MPI_Wtime();
 
 	int k;
-#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rank, rowSize, world_size, read_time) private(k, fpA, A, fpB, B, readed, r_start, r_end) schedule(dynamic)
+#pragma omp parallel for shared(path_matriz_A, path_matriz_B, C, n, rank, rowSize, world_size) private(k, fpA, A, fpB, B, readed, r_start, r_end, read_time) schedule(dynamic)
 	for (k = rank; k < n; k += (world_size))
 	{
 		//================================ LEITURA ================================

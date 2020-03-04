@@ -84,21 +84,35 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	end = MPI_Wtime();
+	
 	// Join das matrizes calculadas
 	double *result = (double *)calloc(matrixSize, sizeof(double));
 	MPI_Reduce(C, result, matrixSize, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	
-	end = MPI_Wtime();
+	
 	//---------------------------------------------------------------------------------
 
 	free(C);
 
 	double exec_time = (end - start) - read_time;
-	printLogMPI(log_path, ALGORITMO, n, exec_time, read_time, rank, world_size);
+	double *times = (double*) calloc(world_size, sizeof(double));
+	double *times_result = (double*) calloc(world_size, sizeof(double));
+	times[rank] = exec_time;
+
+	MPI_Reduce(times, times_result, world_size, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
 	// SAÍDAS
 	if (rank == 0)
 	{
+
+		//exec_total+=exec_time;
+		//printLogMPI(log_path, ALGORITMO, n, exec_time, read_time, rank, world_size);,
+		double max_time = 0;
+		for (int i=0; i < world_size; i++){
+			if(times_result[i] > max_time)
+				max_time = times_result[i];
+		}
 		if (output != 0)
 		{
 			printMatrix("output/C_summa_mpi.txt", result, n);
