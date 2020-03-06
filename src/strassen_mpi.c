@@ -112,20 +112,20 @@ double *strassen_step1(ulint n)
 	double *C11, *C12, *C21, *C22;
 	int c11Init = 0, c12Init = 0, c21Init = 0, c22Init = 0;
 
-	int mustExecTask1 = world_size == 1 || rank == 1 || rank == 8;
-	int mustExecTask2 = world_size == 1 || rank == 2 || rank == 9 || (world_size == 2 && rank == 1);
-	int mustExecTask3 = world_size == 1 || rank == 3 || rank == 10 || (world_size <= 3 && rank == 1);
-	int mustExecTask4 = world_size == 1 || rank == 4 || rank == 11 || (world_size <= 2 && rank == 1) || (world_size > 2 && world_size <= 4 && rank == 2);
-	int mustExecTask5 = world_size == 1 || rank == 5 || rank == 12 || (world_size <= 5 && rank == 1);
-	int mustExecTask6 = world_size == 1 || rank == 6 || rank == 13 || (world_size <= 3 && rank == 1) || (world_size > 3 && world_size <= 6 && rank == 3);
-	int mustExecTask7 = world_size == 1 || rank == 7 || rank == 14 || (world_size <= 2 && rank == 1) || (world_size > 2 && world_size <= 7 && rank == 2);
-	int ownerTask1 = (world_size > 1) ? 1 : 0;
-	int ownerTask2 = (world_size > 2) ? 2 : (world_size > 1) ? 1 : 0;
-	int ownerTask3 = (world_size > 3) ? 3 : (world_size > 1) ? 1 : 0;
-	int ownerTask4 = (world_size > 4) ? 4 : (world_size > 2) ? 2 : (world_size > 1) ? 1 : 0;
-	int ownerTask5 = (world_size > 5) ? 5 : (world_size > 1) ? 1 : 0;
-	int ownerTask6 = (world_size > 6) ? 6 : (world_size > 3) ? 3 : (world_size > 1) ? 1 : 0;
-	int ownerTask7 = (world_size > 7) ? 7 : (world_size > 2) ? 2 : (world_size > 1) ? 1 : 0;
+	int ownerTask1 = 0;
+	int ownerTask2 = (world_size >= 2) ? 1 : 0;
+	int ownerTask3 = (world_size >= 3) ? 2 : 0;
+	int ownerTask4 = (world_size >= 4) ? 3 : (world_size == 2) ? 1 : 0;
+	int ownerTask5 = (world_size >= 5) ? 4 : (world_size == 3) ? 1 : 0;
+	int ownerTask6 = (world_size >= 6) ? 5 : (world_size >= 3) ? 2 : (world_size >= 2) ? 1 : 0;
+	int ownerTask7 = (world_size >= 7) ? 6 : (world_size >= 2) ? 1 : 0;
+	int mustExecTask1 = rank == ownerTask1 || rank == 7;
+	int mustExecTask2 = rank == ownerTask2 || rank == 8;
+	int mustExecTask3 = rank == ownerTask3 || rank == 9;
+	int mustExecTask4 = rank == ownerTask4 || rank == 10;
+	int mustExecTask5 = rank == ownerTask5 || rank == 11;
+	int mustExecTask6 = rank == ownerTask6 || rank == 12;
+	int mustExecTask7 = rank == ownerTask7 || rank == 13;
 
 	MPI_Request reqM1, reqM2, reqM3, reqM4, reqM5, reqC11, reqC12, reqC21, reqC22;
 	MPI_Status statusM1, statusM2, statusM3, statusM4, statusM5, statusC11, statusC12, statusC21, statusC22;
@@ -133,7 +133,7 @@ double *strassen_step1(ulint n)
 	// **************** Task 1 ****************
 	if (mustExecTask1)
 	{
-		if (rank == 8)
+		if (rank >= 7)
 		{
 			double *_A, *_B;
 			strassen_step2(_A, _B, blockSize);
@@ -150,7 +150,7 @@ double *strassen_step1(ulint n)
 	// **************** Task 4 ****************
 	if (mustExecTask4)
 	{
-		if (rank == 11)
+		if (rank >= 7)
 		{
 			double *_A, *_B;
 			strassen_step2(_A, _B, blockSize);
@@ -167,7 +167,7 @@ double *strassen_step1(ulint n)
 	// **************** Task 5 ****************
 	if (mustExecTask5)
 	{
-		if (rank == 12)
+		if (rank >= 7)
 		{
 			double *_A, *_B;
 			strassen_step2(_A, _B, blockSize);
@@ -184,7 +184,7 @@ double *strassen_step1(ulint n)
 	// **************** Task 2 ****************
 	if (mustExecTask2)
 	{
-		if (rank == 9)
+		if (rank >= 7)
 		{
 			double *_A, *_B;
 			strassen_step2(_A, _B, blockSize);
@@ -211,7 +211,7 @@ double *strassen_step1(ulint n)
 	// **************** Task 3 ****************
 	if (mustExecTask3)
 	{
-		if (rank == 10)
+		if (rank >= 7)
 		{
 			double *_A, *_B;
 			strassen_step2(_A, _B, blockSize);
@@ -238,7 +238,7 @@ double *strassen_step1(ulint n)
 	// **************** Task 6 ****************
 	if (mustExecTask6)
 	{
-		if (rank == 13)
+		if (rank >= 7)
 		{
 			double *_A, *_B;
 			strassen_step2(_A, _B, blockSize);
@@ -272,7 +272,7 @@ double *strassen_step1(ulint n)
 	// **************** Task 7 ****************
 	if (mustExecTask7)
 	{
-		if (rank == 14)
+		if (rank >= 7)
 		{
 			double *_A, *_B;
 			strassen_step2(_A, _B, blockSize);
@@ -301,10 +301,6 @@ double *strassen_step1(ulint n)
 			if (!isMainRank)
 				MPI_Isend(C11, blockQtd, MPI_DOUBLE, mainRank, 8, MPI_COMM_WORLD, &reqC11);
 		}
-	}
-
-	if (rank <= 7)
-	{
 	}
 
 	if (!isMainRank)
@@ -356,10 +352,10 @@ double *strassen_step2(double *A, double *B, ulint n)
 		return C;
 	}
 
-	int mustExecTask1 = world_size <= 8 || rank <= 7;
-	int mustExecTask2 = world_size <= 8 || rank > 7 || (rank + 7) >= world_size;
-	int ownerTask1 = (rank > 7) ? rank - 7 : rank;
-	int ownerTask2 = (rank > 7) ? rank : ((rank + 7) < world_size) ? rank + 7 : rank;
+	int ownerTask1 = (rank >= 7) ? rank - 7 : rank;
+	int ownerTask2 = (rank >= 7 || (rank + 7) >= world_size) ? rank : rank + 7;
+	int mustExecTask1 = rank == ownerTask1;
+	int mustExecTask2 = rank == ownerTask2;
 
 	ulint size = n * n;
 	ulint blockSize = n / (ulint)2;
@@ -374,7 +370,7 @@ double *strassen_step2(double *A, double *B, ulint n)
 		MPI_Isend(A, size, MPI_DOUBLE, rank + 7, 9, MPI_COMM_WORLD, &reqA);
 		MPI_Isend(B, size, MPI_DOUBLE, rank + 7, 10, MPI_COMM_WORLD, &reqB);
 	}
-	if (rank > 7)
+	if (rank >= 7)
 	{
 		A = (double *)malloc(size * (ulint)sizeof(double));
 		MPI_Irecv(A, size, MPI_DOUBLE, rank - 7, 9, MPI_COMM_WORLD, &reqA);
@@ -386,14 +382,14 @@ double *strassen_step2(double *A, double *B, ulint n)
 	double *A12 = (double *)malloc(mallocSize);
 	double *A21 = (double *)malloc(mallocSize);
 	double *A22 = (double *)malloc(mallocSize);
-	if (rank > 7)
+	if (rank >= 7)
 		MPI_Wait(&reqA, &statusA);
 	split(A, A11, A12, A21, A22, n);
 	double *B11 = (double *)malloc(mallocSize);
 	double *B12 = (double *)malloc(mallocSize);
 	double *B21 = (double *)malloc(mallocSize);
 	double *B22 = (double *)malloc(mallocSize);
-	if (rank > 7)
+	if (rank >= 7)
 		MPI_Wait(&reqB, &statusB);
 	split(B, B11, B12, B21, B22, n);
 
