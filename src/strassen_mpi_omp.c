@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 	ulint matrixSize = n * n;
 
 	// Configurações do OpenMP
-	omp_set_num_threads(omp_get_max_threads());
+	omp_set_num_threads(2);
 	omp_set_dynamic(0);
 
 	// Configurações do MPI

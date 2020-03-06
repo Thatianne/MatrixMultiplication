@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 	double *time_read = (double *)malloc(rowSize);
 
 	// Configurações do OpenMP
-	omp_set_num_threads(omp_get_max_threads());
+	omp_set_num_threads(2);
 	omp_set_dynamic(0);
 
 	// Configurações do MPI
