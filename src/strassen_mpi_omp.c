@@ -74,9 +74,22 @@ int main(int argc, char *argv[])
 	//---------------------------------------------------------------------------------
 
 	double exec_time = (end - start) - read_time;
-	printLogMPI(log_path, ALGORITMO, n, exec_time, read_time, rank, world_size);
+	double *times = (double *)calloc(world_size, sizeof(double));
+	double *times_result = (double *)calloc(world_size, sizeof(double));
+	times[rank] = exec_time;
+
+	MPI_Reduce(times, times_result, world_size, MPI_DOUBLE, MPI_SUM, mainRank, MPI_COMM_WORLD);
 	MPI_Barrier(MPI_COMM_WORLD);
 
+	double max_time = 0;
+	double total_time = 0;
+	for (int i = 0; i < world_size; i++)
+	{
+		if (times_result[i] > max_time)
+			max_time = times_result[i];
+		total_time += times_result[i];
+	}
+	printLogMPI(log_path, ALGORITMO, n, total_time, max_time, rank, world_size);
 	// SAÍDAS
 	if (isMainRank)
 	{
