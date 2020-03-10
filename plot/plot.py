@@ -69,17 +69,17 @@ ux = plt.subplot(111)
 for k in j:
     dfs_summa_omp_n[str(k)] = df_summa_omp[df_summa_omp.n == k]
     ts = df_summa_omp[df_summa_omp.n == k].temp_max.values[0]
-    dfs_summa_omp_n[str(k)]['processadores'] = 2*dfs_summa_omp_n[str(k)]['np']
+    dfs_summa_omp_n[str(k)]['processadores'] = 4*dfs_summa_omp_n[str(k)]['np']
     dfs_summa_omp_n[str(k)]['aceleracao'] = ts/(dfs_summa_omp_n[str(k)]['temp_max'].values)
-    dfs_summa_omp_n[str(k)]['eficiencia'] = dfs_summa_omp_n[str(k)]['aceleracao']/(dfs_summa_omp_n[str(k)]['processadores']/10)
+    dfs_summa_omp_n[str(k)]['eficiencia'] = dfs_summa_omp_n[str(k)]['aceleracao']/(dfs_summa_omp_n[str(k)]['processadores']/20)
     
     fig = plt.figure()
     ax = plt.subplot(111)
     ax.plot(dfs_summa_omp_n[str(k)]['processadores'].values, dfs_summa_omp_n[str(k)]['eficiencia'].values)
-    plt.title('Eficiência ('+str(k)+') - Summa MPI OMP')
+    plt.title('Eficiência ('+str(k)+') - Summa MPI OMP (4 trheads)')
     plt.xlabel('Número de processos')
     plt.ylabel('Tempo (s)')
-    fig.savefig('/home/gabriel/Dropbox/UEFS/2019.2/CAD/Problema 2/Resultados/eficiencia'+str(k)+'_summaMPI-OMP.jpg', dpi=400)
+    fig.savefig('/home/gabriel/Dropbox/UEFS/2019.2/CAD/Problema 2/Resultados/eficiencia'+str(k)+'_summaMPI-OMP_max.jpg', dpi=400)
 
 fig2 = plt.figure(figsize=(11,10))
 for k in j:
@@ -89,6 +89,6 @@ for k in j:
 plt.legend()
 plt.xlabel('Número de processos')
 plt.ylabel('Tempo (s)')
-plt.title('Tempo de usuário de todos os trabalhos - Summa MPI-OMP')
-fig2.savefig('/home/gabriel/Dropbox/UEFS/2019.2/CAD/Problema 2/Resultados/tempo_de_usuario_summaMPI-OMP', dpi=400)
+plt.title('Tempo de usuário de todos os trabalhos - Summa MPI-OMP (4 trheads)')
+fig2.savefig('/home/gabriel/Dropbox/UEFS/2019.2/CAD/Problema 2/Resultados/tempo_de_usuario_summaMPI-OMP_max', dpi=400)
 
